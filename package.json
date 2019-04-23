@@ -1,0 +1,16 @@
+{
+  "name": "mcnodeserver",
+  "version": "1.0.0",
+  "description": "A minecraft server written in node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "node ."
+  },
+  "author": "StackDoubleFlow",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-preset-env": "^1.7.0",
+    "babel-register": "^6.26.0"
+  },
+  "dependencies": {}
+}

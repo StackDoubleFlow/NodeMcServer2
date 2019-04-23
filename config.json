@@ -1,0 +1,7 @@
+{
+    "motd": "This is a test description",
+    "port": 25566,
+    "icon_file": "icon.png",
+    "max_players": 100,
+    "world_file": "world.nodemc"
+}
