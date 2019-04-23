@@ -1,4 +1,5 @@
 var fs = require('fs');
+var utils = require('./../utils');
 
 /**
  * A minecraft world represented in my own format
@@ -23,7 +24,11 @@ class World {
         }
     }
 
-    getChunkData(x, y) {
+    getChunkData(x, y, fullChunk) {
+        var fullPacket = utils.createBufferObject();
+        utils.writeInt(x, fullPacket);
+        utils.writeInt(y, fullPacket);
+        utils.writeByte(fullChunk ? 1 : 0, fullPacket);
         
     }
 
