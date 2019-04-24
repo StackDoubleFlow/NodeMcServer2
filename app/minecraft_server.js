@@ -53,6 +53,7 @@ class MinecraftServer {
         console.log("Loading world");
 
         this.World = new World(this.Config["world_file"]);
+        this.World.getChunkSection(0, 0, 0);
 
         // Old Test code
         /*

@@ -129,7 +129,6 @@ function HandleMojangResponse(player, dataLength, response, data) {
     console.log("~~ S->C ~~ logn ~ LoginSuccess");
     player.EntityID = crypto.randomBytes(2).readUIntBE(0, 2);
 
-
     var joinGame = utils.createBufferObject();
     utils.writeInt(player.EntityID, joinGame); //Entity ID
     utils.writeByte(1, joinGame); // Gamemode
@@ -139,6 +138,8 @@ function HandleMojangResponse(player, dataLength, response, data) {
     utils.writeString("default", 16, joinGame); // Level type
     utils.writeByte(0, joinGame);
     utils.writePacket(0x25, joinGame, player);
+
+    //var positionAndLook = 
     player.State = "play";
 }
 
