@@ -93,6 +93,11 @@ class Player {
          */
         this.Cipher = undefined;
         /**
+         * The decipher used for encryption
+         * @type {crypto.Decipher}
+         */
+        this.Decipher = undefined;
+        /**
          * The entity ID of the player
          */
         this.EntityID = 0;

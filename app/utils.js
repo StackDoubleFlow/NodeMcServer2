@@ -33,17 +33,12 @@ export const createGetRequest = (url) => new Promise((resolve, reject) => {
  * Player to read from
  */
 export function resetInternalBuffer(player) {
-    var data = player.TCPSocket.read(/*player.TCPSocket.readableLength*/);
-    data = Buffer.from(data);
-    player.InternalBuffer = data;
-    console.log(player.UseEncryption);
+    var data = player.TCPSocket.read();
     if(player.UseEncryption) {
-        console.log(data.toString('hex'));
-        var decipher = crypto.createDecipheriv("aes-128-cfb8", player.SharedSecret, player.SharedSecret);
-        decipher.update(data);
-        data = decipher.final();
-        console.log(data.toString('hex'));
+        player.Decipher.write(data);
+        data = player.Decipher.read();
     }
+    player.InternalBuffer = data;
     if(!player.InternalBuffer) console.log("Internal Buffer was null");
     player.InternalIndex = 0;
 }

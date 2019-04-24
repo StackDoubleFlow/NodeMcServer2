@@ -100,6 +100,7 @@ function HandleEncyptionResponse(player, dataLength) {
     var serverHash = utils.minecraftHexDigest(digest);
     player.Cipher = crypto.createCipheriv("aes-128-cfb8", player.SharedSecret, player.SharedSecret);
     player.Cipher.pipe(player.TCPSocket);
+    player.Decipher = crypto.createDecipheriv("aes-128-cfb8", player.SharedSecret, player.SharedSecret);
     https.get("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=" + player.Username + "&serverId=" + serverHash, (res) => {
         let data = '';
         res.on('end', () => HandleMojangResponse(player, dataLength, res, data));
