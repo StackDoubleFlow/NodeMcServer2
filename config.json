@@ -1,7 +1,7 @@
 {
-    "motd": "This is fun",
+    "motd": "Allen likes penis",
     "port": 25566,
-    "icon_file": "icon.png",
+    "icon_file": "icons",
     "max_players": 100,
     "world_file": "world.nodemc"
 }

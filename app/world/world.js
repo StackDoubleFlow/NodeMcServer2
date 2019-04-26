@@ -1,5 +1,5 @@
 var fs = require('fs');
-var utils = require('./../utils');
+var utils = require('./../utils.js');
 
 /**
  * A minecraft world represented in my own format
@@ -33,6 +33,7 @@ class World {
         utils.writeInt(x, fullPacket);
         utils.writeInt(z, fullPacket);
         utils.writeByte(fullChunk ? 1 : 0, fullPacket);
+        utils.writeVarInt(0xF, fullPacket);
         // Chunk data
         this.getChunkData(x, z, fullPacket);
         // Primary Bit Mask
@@ -40,6 +41,7 @@ class World {
         // Block Entities
         utils.writeVarInt(0, fullPacket);
 
+        console.log(fullPacket.b.toString('hex'));
         return fullPacket;
     }
 
@@ -58,8 +60,8 @@ class World {
         for(var i = 0; i < 256; i++) {
             utils.writeInt(0, buffer);
         }
-        utils.writeVarInt(buffer.b.byteLength);
-        utils.writeByteArray(buffer.b);
+        utils.writeByteArray(buffer.b, fullPacket, true);
+        utils.appendData(fullPacket, buffer.b);
     }
 
     getChunkSection(x, y, z, palette) {
@@ -89,7 +91,6 @@ class World {
                         longs.push(temp);
                         longLow = longHigh = 0;
                         longLow |= blockStateID >> (64 - longOffset);
-                        //console.log(longIndex, endingLongIndex, longOffset, temp.toString('hex'), 64 - longOffset);
                     } else if(longOffset < 32 && longOffset + bitsPerBlock - 1 >= 32) {
                         longLow |= (blockStateID << longOffset) & 0xFFFFFF;
                         longHigh |= blockStateID >> (32 - longOffset - 1);
@@ -112,10 +113,9 @@ class World {
         utils.writeByteArray(Buffer.concat(longs), chunkSection);
         // Block Light
         utils.writeByteArray(Buffer.alloc(2048, 0xFF), chunkSection);
-        console.log(longs.length);
         // Sky Light
         utils.writeByteArray(Buffer.alloc(2048, 0xFF), chunkSection);
-        return chunkSection;
+        return chunkSection.b;
 
     }
 

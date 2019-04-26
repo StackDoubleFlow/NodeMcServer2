@@ -200,9 +200,10 @@ export function writeByte(byte, bufferObject) {
  * The bytes to write to the buffer
  * @param {Object} bufferObject 
  * The object containing the buffer to write to
+ * @param {boolean} writeLength
  */
-export function writeByteArray(bytes, bufferObject) {
-    writeVarInt(bytes.length, bufferObject);
+export function writeByteArray(bytes, bufferObject, writeLength) {
+    if(writeLength) writeVarInt(bytes.length, bufferObject);
     appendData(bufferObject, Buffer.from(bytes));
 }
 
@@ -241,6 +242,20 @@ export function writeString(string, n, bufferObject) {
     }
     writeVarInt(string.length, bufferObject);
     appendData(bufferObject, out);
+}
+
+/**
+ * Writes a string to a buffer
+ * 
+ * @param {any} json 
+ * Any object or primative that can be stringified
+ * @param {number} n 
+ * Maximum string length
+ * @param {Object} bufferObject 
+ * The object containing the buffer to write to
+ */
+export function writeJson(json, m, bufferObject) {
+    writeString(JSON.stringify(json), m, bufferObject);
 }
 
 /**
@@ -324,19 +339,27 @@ export function writeInt(value, buffer) {
  * The data of the packet
  * @param {Player} player
  * The player to write to
+ * @param {string} state
+ * The state of the packet used for logging
+ * @param {string} name
+ * The name of the packet used for logging
  */
-export function writePacket(packetID, data, player) {
+export function writePacket(packetID, data, player, state, name) {
+    var dataDuplicate = createBufferObject();
+    prependData(dataDuplicate, data.b);
     var bufferObject = createBufferObject();
     var temp = createBufferObject();
     writeVarInt(packetID, temp); // Packet ID
-    prependData(data, temp.b);
-    writeVarInt(data.b.length, bufferObject); // Length
-    appendData(bufferObject, data.b);
+    prependData(dataDuplicate, temp.b);
+    writeVarInt(dataDuplicate.b.length, bufferObject); // Length
+    appendData(bufferObject, dataDuplicate.b);
     if(player.UseEncryption) {
         player.Cipher.write(bufferObject.b);
     } else {
         player.TCPSocket.write(bufferObject.b);
     }
+    const clientName = player.Username || player.TCPSocket.remoteAddress;
+    console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ S->C ~~ " + state + " ~ " + name);
 }
 
 /**

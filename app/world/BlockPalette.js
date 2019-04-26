@@ -1,5 +1,5 @@
 
-class BlockPalette {
+export class BlockPalette {
     
     constructor() {
         

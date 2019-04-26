@@ -1,7 +1,7 @@
 
 'use strict';
 
-var MinecraftServer = require('./app/minecraft_server');
+var MinecraftServer = require('./app/MinecraftServer.js');
 console.log("Starting server...");
 
 var server = new MinecraftServer();

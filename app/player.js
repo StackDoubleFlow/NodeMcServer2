@@ -3,9 +3,8 @@
 
 var net = require('net');
 var utils = require('./utils');
-var PacketManager = require('./packets/packet_manager');
-var packets = require('./packets/packets');
-var MinecraftServer = require('./minecraft_server');
+var PacketManager = require('./packets/PacketManager');
+var MinecraftServer = require('./MinecraftServer');
 var crypto = require('crypto');
 
 class Player {
@@ -88,6 +87,10 @@ class Player {
          */
         this.UUID = undefined;
         /**
+         * Unformatted UUID of the player
+         */
+        this.UnformattedUUID = undefined;
+        /**
          * The cipher used for encryption
          * @type {crypto.Cipher}
          */
@@ -98,11 +101,18 @@ class Player {
          */
         this.Decipher = undefined;
         /**
+         * The player's properties
+         */
+        this.Properties = undefined;
+        /**
          * The entity ID of the player
          */
         this.EntityID = 0;
+        /**
+         * The ping player
+         */
+        this.ping = -1;
 
-        packets.registerAllPackets(this.PacketManager);
         this.TCPSocket.on('readable', this.onStreamReadable.bind(this));
         this.TCPSocket.on('end', this.onStreamEnd.bind(this));
     }
@@ -134,10 +144,61 @@ class Player {
      * 
      */
     readNextPacket() {
-        var length = utils.readVarInt(this);
-        var packetID = utils.readVarInt(this);
-        this.PacketManager.handlePacket(length, this.State, packetID, this);
+        try {
+            var length = utils.readVarInt(this);
+            var packetID = utils.readVarInt(this);
+            this.PacketManager.handlePacket(length, this.State, packetID, this);
+        } catch(e) {
+            console.error(e.stack);
+            /* this.kick({
+                "text": "Internal server error",
+                "color": "red"
+            }); */
+        }
         
+    }
+
+    chatName(color="white") {
+        const special = {
+            "Notch": "gold",
+            "StackDoubleFlow": "green",
+            "AL_1": "aqua"
+        };
+        return {
+            "text": this.Username,
+            "color": special[this.Username] || color,
+            "clickEvent": {
+                "action": "suggest_command",
+                "value": "/tell " + this.Username + " "
+            },
+            "hoverEvent": {
+                "action": "show_text",
+                "value": this.UUID
+            }
+        };
+    }
+
+    sendMessage(message, type=1) {
+        if (this.State !== "play") throw Error('Can only send messages to player in "play" state');
+        if (typeof message === "string")
+            message = { "text": message };
+        
+        const response = utils.createBufferObject();
+        utils.writeJson(message, 32767, response);
+        utils.writeByte(type, response);
+        utils.writePacket(0x0E, response, this, "play", "ChatMessage");
+    }
+
+    kick(reason) {
+        if (this.State !== "play") throw Error('Can only kick a player in "play" state');
+        if (typeof reason === "string")
+            reason = { "text": reason };
+        
+        const response = utils.createBufferObject();
+        utils.writeJson(reason, 32767, response);
+        utils.writePacket(0x1B, response, this, "play", "Disconnect");
+        
+        this.TCPSocket.end();
     }
 
     /**
