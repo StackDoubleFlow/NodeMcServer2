@@ -14,7 +14,7 @@ class PacketManager {
      * Initializes the packet manager
      * 
      */
-    constructor(version="1.13.2") {
+    constructor(version="1.14") {
         const versionInfo = require(`./versions/${version}.js`);
 
         /**
@@ -36,7 +36,7 @@ class PacketManager {
          * 
          * @type {Object<string, Object<number, Object<String, any>>>}
          */
-        this.packets = versionInfo.packets;
+        this.inboundPackets = versionInfo.inboundPackets;
 
         /**
          * Packet callbacks
@@ -54,7 +54,7 @@ class PacketManager {
      * @return {PacketCallback} callback
      */
     getPacketCallback(state, packetId) {
-        return this.callbacks[this.packets[state][packetId]];
+        return this.callbacks[this.inboundPackets[state][packetId]];
     }
 
     /**
@@ -66,7 +66,7 @@ class PacketManager {
      * @param {Player} player
      */
     handlePacket(length, state, packetId, player) {
-        var packet = this.packets[state][packetId];
+        var packet = this.inboundPackets[state][packetId];
 
         if (!packet) {
             console.log("Unable to handle packet: " + state + " " + packetId.toString(16));
@@ -78,7 +78,7 @@ class PacketManager {
 
         if(packet.todo) utils.readBytes(player, length);
 
-        const clientName = player.Username || player.TCPSocket.remoteAddress;
+        const clientName = player.username || player.tcpSocket.remoteAddress;
 
         console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ C->S ~~", state, "~", packet.name, packet.todo ? "~ TODO" : "");
         callback(player, length);

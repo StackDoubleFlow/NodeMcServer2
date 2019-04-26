@@ -1,6 +1,6 @@
 const World = require('./World.js');
 
-export class Location {
+class Location {
   
   /**
    * @param {World} world
@@ -61,3 +61,5 @@ export class Location {
     this.pitch -= location.pitch;
   }
 }
+
+module.exports = Location;

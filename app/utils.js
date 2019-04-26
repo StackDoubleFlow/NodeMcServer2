@@ -33,14 +33,14 @@ export const createGetRequest = (url) => new Promise((resolve, reject) => {
  * Player to read from
  */
 export function resetInternalBuffer(player) {
-    var data = player.TCPSocket.read();
-    if(player.UseEncryption) {
-        player.Decipher.write(data);
-        data = player.Decipher.read();
+    var data = player.tcpSocket.read();
+    if(player.useEncryption) {
+        player.decipher.write(data);
+        data = player.decipher.read();
     }
-    player.InternalBuffer = data;
-    if(!player.InternalBuffer) console.log("Internal Buffer was null");
-    player.InternalIndex = 0;
+    player.internalBuffer = data;
+    if(!player.internalBuffer) console.log("Internal Buffer was null");
+    player.internalIndex = 0;
 }
 
 /**
@@ -54,11 +54,11 @@ export function resetInternalBuffer(player) {
  * Data that has been read
  */
 export function readBytes(player, bytes) {
-    if(player.InternalIndex > player.InternalBuffer.length) {
-        console.log("Out of bounds error reading internal buffer: " + player.InternalIndex + " > " + player.InternalBuffer.length);
+    if(player.internalIndex > player.internalBuffer.length) {
+        console.log("Out of bounds error reading internal buffer: " + player.internalIndex + " > " + player.internalBuffer.length);
     }
-    var data = player.InternalBuffer.slice(player.InternalIndex, bytes + player.InternalIndex);
-    player.InternalIndex += bytes;
+    var data = player.internalBuffer.slice(player.internalIndex, bytes + player.internalIndex);
+    player.internalIndex += bytes;
     return data;
 }
 
@@ -321,12 +321,25 @@ export function writeVarLong(value, bufferObject) {
  * 
  * @param {number} value
  * Value to write to the network stream
- * @@param {Object} buffer 
+ * @param {Object} buffer 
  * The object containing the buffer to write to
  */
 export function writeInt(value, buffer) {
     var temp = Buffer.alloc(4);
     temp.writeInt32BE(value, 0);
+    appendData(buffer, temp);
+}
+
+/**
+ * Writes a UUID to the network stream
+ * 
+ * @param {Player} player
+ * The player containing the UUID
+ * @param {Object} buffer
+ * the object containing the buffer to write to
+ */
+export function writeUUID(player, buffer) {
+    var temp = Buffer.from(player.unformattedUUID, 'hex');
     appendData(buffer, temp);
 }
 
@@ -353,12 +366,12 @@ export function writePacket(packetID, data, player, state, name) {
     prependData(dataDuplicate, temp.b);
     writeVarInt(dataDuplicate.b.length, bufferObject); // Length
     appendData(bufferObject, dataDuplicate.b);
-    if(player.UseEncryption) {
-        player.Cipher.write(bufferObject.b);
+    if(player.useEncryption) {
+        player.cipher.write(bufferObject.b);
     } else {
-        player.TCPSocket.write(bufferObject.b);
+        player.tcpSocket.write(bufferObject.b);
     }
-    const clientName = player.Username || player.TCPSocket.remoteAddress;
+    const clientName = player.username || player.tcpSocket.remoteAddress;
     console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ S->C ~~ " + state + " ~ " + name);
 }
 

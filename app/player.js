@@ -6,6 +6,7 @@ var utils = require('./utils');
 var PacketManager = require('./packets/PacketManager');
 var MinecraftServer = require('./MinecraftServer');
 var crypto = require('crypto');
+const Location = require('./world/Location');
 
 class Player {
     /**
@@ -18,103 +19,94 @@ class Player {
      */
     constructor(socket, server) {
         /**
-         * The player's x position
-         * @type {number}
+         * @type {Location}
          */
-        this.PosX = 0;
-        /**
-         * The player's y position
-         * @type {number}
-         */
-        this.PosY = 0;
-        /**
-         * The player's z position
-         * @type {number}
-         */
-        this.PosZ = 0;
+        this.location = new Location(server.world);
         /**
          * The player's network state
          * @type {string}
          */
-        this.State = "none";
+        this.state = "none";
         /**
          * The player's network state
          * @type {net.Socket}
          */
-        this.TCPSocket = socket;
+        this.tcpSocket = socket;
         /**
          * If set, packets with be compressed with zlib
          */
-        this.UsePacketCompression = false;
+        this.usePacketCompression = false;
         /**
          * The PacketManager this player will use
          */
-        this.PacketManager = new PacketManager();
+        this.packetManager = new PacketManager();
         /**
          * The server instance
          */
-        this.Server = server;
+        this.server = server;
         /**
-         * If set, this player is acually a player
+         * If set, this player is acually an online player
          */
-        this.IsPlayer = false;
+        this.isOnline = false;
         /**
          * Verify token used for encryption
          */
-        this.VerifyToken = crypto.randomBytes(4);
+        this.verifyToken = crypto.randomBytes(4);
         /**
          * The player's username
          */
-        this.Username = "";
+        this.username = "";
         /**
          * The shared secret used for encryption
          */
-        this.SharedSecret = undefined;
+        this.sharedSecret = undefined;
         /**
          * Use encryption
          */
-        this.UseEncryption = false;
+        this.useEncryption = false;
         /**
          * Internal buffer used for packet reading
          */
-        this.InternalBuffer = Buffer.alloc(0);
+        this.internalBuffer = Buffer.alloc(0);
         /**
          * Index on the InternalBuffer
          */
-        this.InternalIndex = 0;
+        this.internalIndex = 0;
         /**
          * UUID of the player
+         * @type {string}
          */
         this.UUID = undefined;
         /**
          * Unformatted UUID of the player
+         * @type {string}
          */
-        this.UnformattedUUID = undefined;
+        this.unformattedUUID = undefined;
         /**
          * The cipher used for encryption
          * @type {crypto.Cipher}
          */
-        this.Cipher = undefined;
+        this.cipher = undefined;
         /**
          * The decipher used for encryption
          * @type {crypto.Decipher}
          */
-        this.Decipher = undefined;
+        this.decipher = undefined;
         /**
          * The player's properties
          */
-        this.Properties = undefined;
+        this.properties = [];
         /**
          * The entity ID of the player
          */
-        this.EntityID = 0;
+        this.entityID = 0;
         /**
          * The ping player
          */
         this.ping = -1;
 
-        this.TCPSocket.on('readable', this.onStreamReadable.bind(this));
-        this.TCPSocket.on('end', this.onStreamEnd.bind(this));
+        this.tcpSocket.on('readable', this.onStreamReadable.bind(this));
+        this.tcpSocket.on('end', this.onStreamEnd.bind(this));
     }
 
     /**
@@ -122,9 +114,9 @@ class Player {
      * 
      */
     onStreamReadable() {
-        if(this.TCPSocket.readableLength == 0) return;
+        if(this.tcpSocket.readableLength == 0) return;
         utils.resetInternalBuffer(this);
-        while(this.InternalIndex < this.InternalBuffer.length) {
+        while(this.internalIndex < this.internalBuffer.length) {
             this.readNextPacket();
         }
     }
@@ -134,8 +126,8 @@ class Player {
      * 
      */
     onStreamEnd() {
-        if(this.IsPlayer) {
-            this.Server.onPlayerDisconnected(this);
+        if(this.isOnline) {
+            this.server.onPlayerDisconnected(this);
         }
     }
 
@@ -147,7 +139,7 @@ class Player {
         try {
             var length = utils.readVarInt(this);
             var packetID = utils.readVarInt(this);
-            this.PacketManager.handlePacket(length, this.State, packetID, this);
+            this.packetManager.handlePacket(length, this.state, packetID, this);
         } catch(e) {
             console.error(e.stack);
             /* this.kick({
@@ -165,11 +157,11 @@ class Player {
             "AL_1": "aqua"
         };
         return {
-            "text": this.Username,
-            "color": special[this.Username] || color,
+            "text": this.username,
+            "color": special[this.username] || color,
             "clickEvent": {
                 "action": "suggest_command",
-                "value": "/tell " + this.Username + " "
+                "value": "/tell " + this.username + " "
             },
             "hoverEvent": {
                 "action": "show_text",
@@ -179,7 +171,7 @@ class Player {
     }
 
     sendMessage(message, type=1) {
-        if (this.State !== "play") throw Error('Can only send messages to player in "play" state');
+        if (this.state !== "play") throw Error('Can only send messages to player in "play" state');
         if (typeof message === "string")
             message = { "text": message };
         
@@ -190,15 +182,15 @@ class Player {
     }
 
     kick(reason) {
-        if (this.State !== "play") throw Error('Can only kick a player in "play" state');
+        if (this.state !== "play") throw Error('Can only kick a player in "play" state');
         if (typeof reason === "string")
             reason = { "text": reason };
         
         const response = utils.createBufferObject();
         utils.writeJson(reason, 32767, response);
-        utils.writePacket(0x1B, response, this, "play", "Disconnect");
+        utils.writePacket(0x1A, response, this, "play", "Disconnect");
         
-        this.TCPSocket.end();
+        this.tcpSocket.end();
     }
 
     /**

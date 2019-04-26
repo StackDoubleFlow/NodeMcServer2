@@ -78,7 +78,7 @@ class MinecraftServer {
     sendKeepAlive() {
         var keepAlive = utils.createBufferObject();
         utils.writeLong(new Date().getTime(), keepAlive);
-        this.writePacketToAll(0x21, keepAlive, "play", "KeepAlive");
+        this.writePacketToAll(0x20, keepAlive, "play", "KeepAlive");
     }
 
     /**
@@ -97,7 +97,7 @@ class MinecraftServer {
      */
     onPlayerConnected(player) {
         this.onlinePlayers.push(player);
-        player.IsPlayer = true;
+        player.isOnline = true;
         this.broadcast({
             text: "",
             extra: [
