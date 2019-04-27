@@ -64,7 +64,7 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
     utils.writePacket(0x35, playerPositionAndLook, player, "play", "PlayerPositionAndLook");
 
 
-    //utils.writePacket(0x21, player.server.world.getChunkPacket(0, 0, true), player, "play", "ChunkData");
+    utils.writePacket(0x21, player.server.world.getChunkPacket(0, 0, true), player, "play", "ChunkData");
 
     var playerListHeaderAndFooter = utils.createBufferObject();
     utils.writeJson({ text: "MCNodeServer" }, 32767, playerListHeaderAndFooter);
@@ -119,6 +119,22 @@ const version = {
         stat: {},
         login: {},
         play: {}
+    },
+    senders: {
+        none: {
+
+        },
+        stat: {
+
+        },
+        logn: {
+            sendLoginRequest: (player, UUID, username) => {
+
+            }
+        },
+        play: {
+
+        }
     },
     inboundPackets: {
         none: {

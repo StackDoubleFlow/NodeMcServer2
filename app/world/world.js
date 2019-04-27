@@ -34,6 +34,8 @@ class World {
         utils.writeInt(z, fullPacket);
         utils.writeByte(fullChunk ? 1 : 0, fullPacket);
         utils.writeVarInt(0xF, fullPacket);
+        // Heightmaps
+        utils.writeHeightmapPlaceholder(fullPacket);
         // Chunk data
         this.getChunkData(x, z, fullPacket);
         // Primary Bit Mask
@@ -48,6 +50,7 @@ class World {
     getChunkData(x, z, fullPacket) {
         var buffer = utils.createBufferObject();
         // Chunk sections
+        utils.writeVarInt(16, buffer);
         utils.appendData(buffer, this.getChunkSection(x, 0, z));
         utils.appendData(buffer, this.getChunkSection(x, 1, z));
         utils.appendData(buffer, this.getChunkSection(x, 2, z));
@@ -56,6 +59,14 @@ class World {
         utils.appendData(buffer, this.getChunkSection(x, 5, z));
         utils.appendData(buffer, this.getChunkSection(x, 6, z));
         utils.appendData(buffer, this.getChunkSection(x, 7, z));
+        utils.appendData(buffer, this.getChunkSection(x, 8, z));
+        utils.appendData(buffer, this.getChunkSection(x, 9, z));
+        utils.appendData(buffer, this.getChunkSection(x, 10, z));
+        utils.appendData(buffer, this.getChunkSection(x, 11, z));
+        utils.appendData(buffer, this.getChunkSection(x, 12, z));
+        utils.appendData(buffer, this.getChunkSection(x, 13, z));
+        utils.appendData(buffer, this.getChunkSection(x, 14, z));
+        utils.appendData(buffer, this.getChunkSection(x, 15, z));
         // Biomes
         for(var i = 0; i < 256; i++) {
             utils.writeInt(0, buffer);
@@ -66,6 +77,8 @@ class World {
 
     getChunkSection(x, y, z, palette) {
         var chunkSection = utils.createBufferObject();
+        // Block Count
+        utils.writeUShort(16*16*16, chunkSection);
         // This cannot be any more than 32
         var bitsPerBlock = 4;
         utils.writeByte(bitsPerBlock, chunkSection);
@@ -110,13 +123,9 @@ class World {
                 }
             }
         }
+        utils.writeVarInt(longs.length, chunkSection);
         utils.writeByteArray(Buffer.concat(longs), chunkSection);
-        // Block Light
-        utils.writeByteArray(Buffer.alloc(2048, 0xFF), chunkSection);
-        // Sky Light
-        utils.writeByteArray(Buffer.alloc(2048, 0xFF), chunkSection);
-        return chunkSection.b;
-
+        return chunkSection.b;    
     }
 
     generateChunk(x, y) {

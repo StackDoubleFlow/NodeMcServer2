@@ -5,7 +5,7 @@ var net = require('net');
 var Player = require('./player');
 var fs = require('fs');
 var crypto = require('crypto');
-var World = require('./world/world');
+var World = require('./world/World');
 var utils = require('./utils');
 var path = require('path');
 

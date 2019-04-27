@@ -331,17 +331,61 @@ export function writeInt(value, buffer) {
 }
 
 /**
+ * Writes an unsigned short to the network stream
+ * 
+ * @param {number} value 
+ * @param {Object} bufferObject 
+ */
+export function writeUShort(value, bufferObject) {
+    var temp = Buffer.alloc(2);
+    temp.writeUInt16BE(value);
+    appendData(bufferObject, temp);
+}
+
+/**
  * Writes a UUID to the network stream
  * 
  * @param {Player} player
  * The player containing the UUID
- * @param {Object} buffer
+ * @param {Object} bufferObject
  * the object containing the buffer to write to
  */
-export function writeUUID(player, buffer) {
+export function writeUUID(player, bufferObject) {
     var temp = Buffer.from(player.unformattedUUID, 'hex');
-    appendData(buffer, temp);
+    appendData(bufferObject, temp);
 }
+
+/**
+ * Writes NBT to the network stream
+ * 
+ * @param {Object} value
+ * JSON NBT stuff
+ * @param {Object} bufferObject
+ * the object containing the buffer to write to
+ */
+export function writeNbt(value, bufferObject) {
+    
+}
+
+export function writeHeightmapPlaceholder(bufferObject) {
+    function writeStr(name) {
+        var out = Buffer.from(name, 'utf-8');
+        writeUShort(name.length, bufferObject);
+        appendData(bufferObject, out);
+    }
+    
+    // Compound
+    writeByte(0x0A, bufferObject); // Type ID (Compound)
+    writeStr("Hightmap"); // Name
+
+    // Long array
+    writeByte(0x04, bufferObject); // Type ID (TAG_List)
+    writeStr("MOTION_BLOCKING"); // Name
+    writeInt(64, bufferObject); // Length
+    writeByteArray(Buffer.alloc(8*64), bufferObject, false); // Values
+    
+    writeByte(0x00, bufferObject); // End Compound
+} 
 
 /**
  * Writes a packet to the network stream
@@ -430,3 +474,4 @@ export function minecraftHexDigest(hash) { //TODO: Clean-up
 export function writeCompressedPacket(packetID, data) {
 
 }
+
