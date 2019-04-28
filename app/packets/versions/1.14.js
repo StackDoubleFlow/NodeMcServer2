@@ -1,8 +1,8 @@
 'use strict'
 
-var PacketManager = require('./../PacketManager.js');
-var Player = require('./../../Player.js');
-var utils = require('./../../utils.js');
+var PacketManager = require('../PacketManager.js');
+var Player = require('../../Player.js');
+var utils = require('../../utils.js');
 var crypto = require('crypto');
 var https = require('https');
 var http = require('http');
@@ -102,10 +102,12 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
 function HandleMojangProfileResponse(player, dataLength, response, data) {
     if(response.statusCode !== 200) {
         console.log("Unable to retrieve player profile!");
+        return;
     }
     data = JSON.parse(data);
     if(data["error"]) {
         console.log("(TODO: Try again later) Error getting player profile: " + data["error"]);
+        return;
     }
     console.log(data);
     player.properties = data["properties"];
@@ -509,12 +511,12 @@ const version = {
                     const face = utils.readBytes(player, 1);
 
                     console.log(`Status: ${status}, Location: (${pos.x}, ${pos.y}, ${pos.z})`);
-                    
+                    /*
                     var bufferObject = utils.createBufferObject();
                     utils.writeByteArray(Buffer.alloc(8), bufferObject, false);
                     utils.writePosition(pos, bufferObject);
                     utils.writeVarInt(1, bufferObject);
-                    //player.server.writePacketToAll(0x0B, bufferObject, "play", "BlockUpdate");
+                    player.server.writePacketToAll(0x0B, bufferObject, "play", "BlockUpdate"); */
                 } catch(e) {
                     console.error(e.stack);
                 }
@@ -528,6 +530,7 @@ const version = {
                 var y = utils.readDouble(player);
                 var z = utils.readDouble(player);
                 var onGround = utils.readBoolean(player);
+                console.log("Position");
                 player.setPosition(x, y, z);
                 console.log(x, y, z);
             },

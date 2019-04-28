@@ -130,6 +130,7 @@ export function readBoolean(player) {
  */
 export function readPosition(player) {
     var data = readBytes(player, 8);
+    console.log(data.toString('hex'));
     var x = data.readUInt32BE(0) >>> 6;
     var zHigh = (data.readUInt32BE(2) & 0x003FFFFF) << 4;
     var zLow = (data.readUInt32BE(4) & 0x0000F000) >> 12;
@@ -142,22 +143,17 @@ export function readPosition(player) {
 }
 
 /**
- * @param {Position} value
+ * @param {Position} pos
  * @param {Player} bufferObject
  */
-export function writePosition(x, y, z, bufferObject) {
-    // ((x & 0x3FFFFFF) << 38) | ((z & 0x3FFFFFF) << 12) | (y & 0xFFF)
+export function writePosition(pos, bufferObject) {
+    var x = pos.x, y = pos.y, z = pos.z;
     var data = Buffer.alloc(8);
-    var longHigh = 0;
-    var longLow = 0;
-    if (x < 0) x = (~Math.abs(x)) + 1;
-    if (z < 0) z = (~Math.abs(x)) + 1;
-    longHigh |= (x & 0x3FFFFFF) << 6;
-    longLow |= (y & 0xFFF);
-
-    data.writeUInt32BE(longHigh, 0);
-    data.writeUInt32BE(longLow, 4);
-    
+    var longHigh = ((x & 0x3FFFFFF) << 38) | ((z & 0x003FFFFF) >>> 16); // This shit shouldn't even work
+    var longLow = (y & 0xFFF) | ((z & 0xFFFFF) << 12);                  // I'm probably utilizing a bug in js but that's cool I guess
+    data.writeInt32BE(longHigh >> 32, 0);
+    data.writeInt32BE(longLow, 4);
+    appendData(bufferObject, data);
 }
 
 /**
