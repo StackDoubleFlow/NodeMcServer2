@@ -1,4 +1,6 @@
 module.exports = {
+  supportedVersions: [ 477 ],
+
   // id, name
   477: "1.14",
   404: "1.13.2",

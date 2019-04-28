@@ -1,5 +1,5 @@
 var fs = require('fs');
-var utils = require('./../utils.js');
+var utils = require('../utils.js');
 
 /**
  * A minecraft world represented in my own format
@@ -32,47 +32,46 @@ class World {
         var fullPacket = utils.createBufferObject();
         utils.writeInt(x, fullPacket);
         utils.writeInt(z, fullPacket);
-        utils.writeByte(fullChunk ? 1 : 0, fullPacket);
-        utils.writeVarInt(0xF, fullPacket);
+        utils.writeByte(1, fullPacket);
+        utils.writeVarInt(0x1, fullPacket);
         // Heightmaps
-        utils.writeHeightmapPlaceholder(fullPacket);
+        utils.writeHeightmap(fullPacket);
         // Chunk data
         this.getChunkData(x, z, fullPacket);
-        // Primary Bit Mask
-        utils.writeVarInt(0x8, fullPacket);
         // Block Entities
         utils.writeVarInt(0, fullPacket);
 
-        console.log(fullPacket.b.toString('hex'));
         return fullPacket;
     }
 
     getChunkData(x, z, fullPacket) {
-        var buffer = utils.createBufferObject();
+        var data = utils.createBufferObject();
         // Chunk sections
-        utils.writeVarInt(16, buffer);
-        utils.appendData(buffer, this.getChunkSection(x, 0, z));
-        utils.appendData(buffer, this.getChunkSection(x, 1, z));
-        utils.appendData(buffer, this.getChunkSection(x, 2, z));
-        utils.appendData(buffer, this.getChunkSection(x, 3, z));
-        utils.appendData(buffer, this.getChunkSection(x, 4, z));
-        utils.appendData(buffer, this.getChunkSection(x, 5, z));
-        utils.appendData(buffer, this.getChunkSection(x, 6, z));
-        utils.appendData(buffer, this.getChunkSection(x, 7, z));
-        utils.appendData(buffer, this.getChunkSection(x, 8, z));
-        utils.appendData(buffer, this.getChunkSection(x, 9, z));
-        utils.appendData(buffer, this.getChunkSection(x, 10, z));
-        utils.appendData(buffer, this.getChunkSection(x, 11, z));
-        utils.appendData(buffer, this.getChunkSection(x, 12, z));
-        utils.appendData(buffer, this.getChunkSection(x, 13, z));
-        utils.appendData(buffer, this.getChunkSection(x, 14, z));
-        utils.appendData(buffer, this.getChunkSection(x, 15, z));
+        utils.writeVarInt(1, data);
+        utils.appendData(data, this.getChunkSection(x, 0, z));
+        //utils.appendData(data, this.getChunkSection(x, 1, z));
+        //utils.appendData(data, this.getChunkSection(x, 2, z));
+        //utils.appendData(data, this.getChunkSection(x, 3, z));
+        //utils.appendData(data, this.getChunkSection(x, 4, z));
+        //utils.appendData(data, this.getChunkSection(x, 5, z));
+        //utils.appendData(data, this.getChunkSection(x, 6, z));
+        //utils.appendData(data, this.getChunkSection(x, 7, z));
+        //utils.appendData(data, this.getChunkSection(x, 8, z));
+        //utils.appendData(data, this.getChunkSection(x, 9, z));
+        //utils.appendData(data, this.getChunkSection(x, 10, z));
+        //utils.appendData(data, this.getChunkSection(x, 11, z));
+        //utils.appendData(data, this.getChunkSection(x, 12, z));
+        //utils.appendData(data, this.getChunkSection(x, 13, z));
+        //utils.appendData(data, this.getChunkSection(x, 14, z));
+        //utils.appendData(data, this.getChunkSection(x, 15, z));
         // Biomes
         for(var i = 0; i < 256; i++) {
-            utils.writeInt(0, buffer);
+            utils.writeInt(0, data);
         }
-        utils.writeByteArray(buffer.b, fullPacket, true);
-        utils.appendData(fullPacket, buffer.b);
+        // Write length in bytes
+        utils.writeVarInt(data.b.length, fullPacket);
+        // Write data structures
+        utils.appendData(fullPacket, data.b);
     }
 
     getChunkSection(x, y, z, palette) {
@@ -118,7 +117,6 @@ class World {
                         temp.writeInt32BE(longLow, 4);
                         longs.push(temp);
                         longLow = longHigh = 0;
-                        //console.log(longIndex, endingLongIndex, longOffset, temp.toString('hex'), 64 - longOffset);
                     }
                 }
             }

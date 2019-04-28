@@ -8,11 +8,12 @@ var https = require('https');
 var http = require('http');
 
 
-function placeholder(name) {
+function placeholder(name, log=true) {
     return {
         name: name,
         parameters: [],
-        todo: true
+        todo: true,
+        log: log
     };
 }
 
@@ -51,21 +52,32 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
     player.state = "play";
     player.server.onPlayerConnected(player);
 
+    player.setPosition(0, 32, 0);
 
     var playerPositionAndLook = utils.createBufferObject();
     // Quick 0 position test
-    utils.writeByteArray(Buffer.alloc(8), playerPositionAndLook, false); // X
-    utils.writeByteArray(Buffer.alloc(8), playerPositionAndLook, false); // Y
-    utils.writeByteArray(Buffer.alloc(8), playerPositionAndLook, false); // Z
-    utils.writeByteArray(Buffer.alloc(4), playerPositionAndLook, false); // Yaw
-    utils.writeByteArray(Buffer.alloc(4), playerPositionAndLook, false); // Pitch
+    utils.writeDouble(0, playerPositionAndLook); // X
+    utils.writeDouble(16, playerPositionAndLook); // Y
+    utils.writeDouble(0, playerPositionAndLook); // Z
+    utils.writeFloat(0, playerPositionAndLook); // Yaw
+    utils.writeFloat(0, playerPositionAndLook); // Pitch
     utils.writeByte(0, playerPositionAndLook);
     utils.writeVarInt(10121, playerPositionAndLook);
     utils.writePacket(0x35, playerPositionAndLook, player, "play", "PlayerPositionAndLook");
 
+    
 
-    utils.writePacket(0x21, player.server.world.getChunkPacket(0, 0, true), player, "play", "ChunkData");
 
+    //fs.writeFileSync("./chunkdump.hex", player.server.world.getChunkPacket(x, z, true).b, 'hex');
+
+    // Chunk data
+    for(var x = -7; x < 7; x++) {
+        for(var z = -7; z < 7; z++) {
+            utils.writePacket(0x21, player.server.world.getChunkPacket(x, z, true), player, "play", "ChunkData");
+        }
+    }
+
+    // Tab Player List
     var playerListHeaderAndFooter = utils.createBufferObject();
     utils.writeJson({ text: "MCNodeServer" }, 32767, playerListHeaderAndFooter);
     utils.writeJson({ "text": "Made by StackDoubleFlow & Allen" }, 32767, playerListHeaderAndFooter);
@@ -93,7 +105,7 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
     }
     data = JSON.parse(data);
     if(data["error"]) {
-        console.log("(TODO: Try again later) Error getting player profile: " + date["error"]);
+        console.log("(TODO: Try again later) Error getting player profile: " + data["error"]);
     }
     console.log(data);
     player.properties = data["properties"];
@@ -101,11 +113,22 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
     utils.writeVarInt(0, playerInfo);
     utils.writeVarInt(player.server.onlinePlayers.length, playerInfo);
     player.server.onlinePlayers.forEach(plr => {
-        utils.writeUUID(player, playerInfo);
+        utils.writeUUID(plr, playerInfo);
         utils.writeString(plr.username, 16, playerInfo);
         utils.writeVarInt(plr.properties, playerInfo);
-        
+        plr.properties.forEach((property) => {
+            console.log(property);
+            utils.writeString(property.name, 32767, playerInfo);
+            utils.writeString(property.value, 32767, playerInfo);
+            utils.writeByte(0, playerInfo);
+        });
+        utils.writeVarInt(1, playerInfo);
+        utils.writeVarInt(player.ping, playerInfo);
+        utils.writeByte(0, playerInfo);
     });
+    //utils.writePacket(0x33, playerInfo, player, "play", "PlayerInfo");
+
+
 
 }
 
@@ -218,6 +241,64 @@ const version = {
                     }
                 ]
             },
+            0x10: {
+                name: "PlayerPosition",
+                parameters: [
+                    {
+                        name: "x",
+                        type: "double"
+                    },
+                    {
+                        name: "y",
+                        type: "double"
+                    },
+                    {
+                        name: "z",
+                        type: "double"
+                    },
+                    {
+                        name: "onGround",
+                        type: "boolean"
+                    }
+                ],
+                log: true
+            },
+            0x12: {
+                name: "PlayerLook",
+                parameters: [
+                    {
+                        name: "yaw",
+                        type: "float"
+                    },
+                    {
+                        name: "pitch",
+                        type: "float"
+                    },
+                    {
+                        name: "onGround",
+                        type: "boolean"
+                    }
+                ],
+                log: true
+            },
+            0x1A: {
+                name: "PlayerDigging",
+                parameters: [
+                    {
+                        name: "status",
+                        type: "varint"
+                    },
+                    {
+                        name: "location",
+                        type: "position"
+                    },
+                    {
+                        name: "face",
+                        type: "byte"
+                    }
+                ],
+                log: true
+            },
 
             // TODO
             0x00: placeholder("TeleportConfirm"),
@@ -235,16 +316,15 @@ const version = {
             0x0D: placeholder("QueryEntityNBT"),
             0x0E: placeholder("UseEntity"),
             0x10: placeholder("LockDifficulty"),
-            0x11: placeholder("PlayerPosition"),
-            0x12: placeholder("PlayerPositionAndLook"),
-            0x13: placeholder("PlayerLook"),
+            0x11: placeholder("PlayerPosition", false),
+            0x12: placeholder("PlayerPositionAndLook", false),
+            0x13: placeholder("PlayerLook", false),
             0x14: placeholder("Player"),
             0x15: placeholder("VehicleMove"),
             0x16: placeholder("SteerBoat"),
             0x17: placeholder("PickItem"),
             0x18: placeholder("CraftRecipeRequest"),
             0x19: placeholder("PlayerAbilities"),
-            0x1A: placeholder("PlayerDigging"),
             0x1B: placeholder("EntityAction"),
             0x1C: placeholder("SteerVehicle"),
             0x1D: placeholder("RecipeBookData"),
@@ -364,6 +444,9 @@ const version = {
                 player.cipher = crypto.createCipheriv("aes-128-cfb8", player.sharedSecret, player.sharedSecret);
                 player.cipher.pipe(player.tcpSocket);
                 player.decipher = crypto.createDecipheriv("aes-128-cfb8", player.sharedSecret, player.sharedSecret);
+                player.tcpSocket.removeListener('readable', player.onStreamReadable);
+                player.tcpSocket.pipe(player.decipher);
+                player.decipher.on('readable', player.onDecipherReadable.bind(player));
                 https.get("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=" + player.username + "&serverId=" + serverHash, (res) => {
                     let data = '';
                     res.on('end', () => HandleMojangLoginResponse(player, dataLength, res, data));
@@ -414,6 +497,50 @@ const version = {
                 var ping = new Date().getTime() - time;
                 player.ping = ping;
             },
+            /**
+             * @param {Player} player
+             * @param {number} dataLength
+             */
+            PlayerDigging: (player, dataLength) => {
+                console.log("Block break");
+                try {
+                    const status = utils.readVarInt(player);
+                    const pos = utils.readPosition(player);
+                    const face = utils.readBytes(player, 1);
+
+                    console.log(`Status: ${status}, Location: (${pos.x}, ${pos.y}, ${pos.z})`);
+                    
+                    var bufferObject = utils.createBufferObject();
+                    utils.writeByteArray(Buffer.alloc(8), bufferObject, false);
+                    utils.writePosition(pos, bufferObject);
+                    utils.writeVarInt(1, bufferObject);
+                    //player.server.writePacketToAll(0x0B, bufferObject, "play", "BlockUpdate");
+                } catch(e) {
+                    console.error(e.stack);
+                }
+            },
+            /**
+             * @param {Player} player
+             * @param {number} dataLength
+             */
+            PlayerPosition: (player, dataLength) => {
+                var x = utils.readDouble(player);
+                var y = utils.readDouble(player);
+                var z = utils.readDouble(player);
+                var onGround = utils.readBoolean(player);
+                player.setPosition(x, y, z);
+                console.log(x, y, z);
+            },
+            /**
+             * @param {Player} player
+             * @param {number} dataLength
+             */
+            PlayerLook: (player, dataLength) => {
+                var yaw = utils.readFloat(player);
+                var pitch = utils.readFloat(player);
+                var onGround = utils.readBoolean(player);
+                player.setRotation(yaw, pitch);
+            },
 
             // TODO
             TeleportConfirm: () => { },
@@ -430,15 +557,12 @@ const version = {
             UseEntity: () => { },
             EditBook: () => { },
             Player: () => { },
-            PlayerPosition: () => { },
             PlayerPositionAndLook: () => { },
-            PlayerLook: () => { },
             VehicleMove: () => { },
             SteerBoat: () => { },
             PickItem: () => { },
             CraftRecipeRequest: () => { },
             PlayerAbilities: () => { },
-            PlayerDigging: () => { },
             EntityAction: () => { },
             SteerVehicle: () => { },
             RecipeBookData: () => { },

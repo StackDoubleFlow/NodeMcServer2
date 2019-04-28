@@ -1,6 +1,7 @@
 const World = require('./World.js');
+const Position = require('./Position.js');
 
-class Location {
+class Location extends Position {
   
   /**
    * @param {World} world
@@ -11,10 +12,8 @@ class Location {
    * @param {number} [pitch]
    */
   constructor(world, x, y, z, yaw, pitch) {
+    super(x, y, z)
     this.world = world;
-    this.x = x || 0;
-    this.y = y || 0;
-    this.z = z || 0;
     this.yaw = yaw;
     this.pitch = pitch;
   }
@@ -40,7 +39,7 @@ class Location {
    * 
    * @param {Location} location
    */
-  addLocation(location) {
+  addPosition(location) {
     this.x += location.x;
     this.y += location.y;
     this.z += location.z;

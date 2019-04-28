@@ -104,9 +104,14 @@ class Player {
          * The ping player
          */
         this.ping = -1;
+        /**
+         * The player position
+         */
+        this.x, this.y, this.z, this.yaw, this.pitch = 0;
 
         this.tcpSocket.on('readable', this.onStreamReadable.bind(this));
         this.tcpSocket.on('end', this.onStreamEnd.bind(this));
+        this.tcpSocket.on('error', (e) => console.error(e.stack));
     }
 
     /**
@@ -115,8 +120,21 @@ class Player {
      */
     onStreamReadable() {
         if(this.tcpSocket.readableLength == 0) return;
+        /*if(this.useEncryption) {
+            this.decipher.write(this.tcpSocket.read());
+            return;
+        }*/
         utils.resetInternalBuffer(this);
         while(this.internalIndex < this.internalBuffer.length) {
+            this.readNextPacket();
+        }
+    }
+    
+    onDecipherReadable() {
+        if(this.decipher.readableLength == 0) return;
+        utils.resetInternalBufferUsingDecipher(this);
+        while(this.internalIndex < this.internalBuffer.length) {
+            //console.log(this.internalIndex);
             this.readNextPacket();
         }
     }
@@ -141,7 +159,7 @@ class Player {
             var packetID = utils.readVarInt(this);
             this.packetManager.handlePacket(length, this.state, packetID, this);
         } catch(e) {
-            console.error(e.stack);
+            //console.error(e.stack);
             /* this.kick({
                 "text": "Internal server error",
                 "color": "red"
@@ -204,9 +222,44 @@ class Player {
      * The new z position
      */
     setPosition(x, y, z) {
-        this.PosX = x;
-        this.PosY = y;
-        this.PosZ = z;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    /**
+     * Sets a player position and rotation
+     * 
+     * @param {number} x
+     * The new x position
+     * @param {number} y
+     * The new y position
+     * @param {number} z
+     * The new z position
+     * @param {number} yaw
+     * The new yaw rotation
+     * @param {number} pitch
+     * The new pitch rotation
+     */
+    setPositionAndRotation(x, y, z, yaw, pitch) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.yaw = yaw;
+        this.pitch = pitch;
+    }
+
+    /**
+     * Sets a player and rotation
+     * 
+     * @param {number} yaw
+     * The new yaw rotation
+     * @param {number} pitch
+     * The new pitch rotation
+     */
+    setRotation(yaw, pitch) {
+        this.yaw = yaw;
+        this.pitch = pitch;
     }
 
     /**
@@ -220,9 +273,9 @@ class Player {
      * The z value to move the player by
      */
     move(x, y, z) {
-        this.PosX += x;
-        this.PosY += y;
-        this.PosZ += z;
+        this.x += x;
+        this.y += y;
+        this.z += z;
     }
 
 }

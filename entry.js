@@ -3,7 +3,7 @@ try {
         presets: ['env']
     });
 
-    module.exports = require('./index.js');
+    module.exports = require('./server.js');
 } catch(e) {
     console.error(e.stack);
     while(true);

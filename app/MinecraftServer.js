@@ -16,6 +16,7 @@ class MinecraftServer {
      * 
      */
     constructor() {
+        console.log("Starting server...");
         this.tcpServer = net.createServer(this.onClientConnected.bind(this));
         /**
          * @type {Player}
@@ -79,6 +80,7 @@ class MinecraftServer {
         var keepAlive = utils.createBufferObject();
         utils.writeLong(new Date().getTime(), keepAlive);
         this.writePacketToAll(0x20, keepAlive, "play", "KeepAlive");
+
     }
 
     /**
@@ -160,6 +162,7 @@ class MinecraftServer {
      * @param {number} port 
      */
     listen(port) {
+        console.log("Binding port");
         this.tcpServer.listen(port);
         console.log("Server listening on port " + port);
     }

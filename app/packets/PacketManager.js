@@ -68,7 +68,7 @@ class PacketManager {
     handlePacket(length, state, packetId, player) {
         var packet = this.inboundPackets[state][packetId];
 
-        if (!packet) {
+        if (packet === undefined) {
             console.log("Unable to handle packet: " + state + " " + packetId.toString(16));
             utils.readBytes(player, length);
             return;
@@ -76,13 +76,19 @@ class PacketManager {
 
         var callback = this.callbacks[state][packet.name];
 
+        var oldInternalIndex = player.internalIndex;
+        length--;
         if(packet.todo) utils.readBytes(player, length);
 
-        const clientName = player.username || player.tcpSocket.remoteAddress;
+        const clientName = player.username || player.tcpSocket.remoteAddress.substr(7);
 
-        console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ C->S ~~", state, "~", packet.name, packet.todo ? "~ TODO" : "");
+        if (packet.log) 
+            console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ C->S ~~", state, "~", packet.name, packet.todo ? "~ TODO" : "");
         callback(player, length);
-        
+        var totalBytesRead = player.internalIndex - oldInternalIndex;
+        if(totalBytesRead !== length) {
+            console.log(length, totalBytesRead);
+        }
     }
 
 }

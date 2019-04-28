@@ -5,7 +5,7 @@ var net = require('net');
 var Player = require('./player');
 var crypto = require('crypto');
 var https = require('https');
-
+var Position = require('./world/Position.js');
 
 /*
  * This is just a place to put things until I find a better place to put them.
@@ -33,12 +33,19 @@ export const createGetRequest = (url) => new Promise((resolve, reject) => {
  * Player to read from
  */
 export function resetInternalBuffer(player) {
-    var data = player.tcpSocket.read();
-    if(player.useEncryption) {
-        player.decipher.write(data);
-        data = player.decipher.read();
-    }
-    player.internalBuffer = data;
+    player.internalBuffer = player.tcpSocket.read();
+    if(!player.internalBuffer) console.log("Internal Buffer was null");
+    player.internalIndex = 0;
+}
+
+/**
+ * Resets the internal buffer of the player using the data from the player's decipher
+ * 
+ * @param {Player} player 
+ * Player to read from
+ */
+export function resetInternalBufferUsingDecipher(player) {
+    player.internalBuffer = player.decipher.read();
     if(!player.internalBuffer) console.log("Internal Buffer was null");
     player.internalIndex = 0;
 }
@@ -54,8 +61,8 @@ export function resetInternalBuffer(player) {
  * Data that has been read
  */
 export function readBytes(player, bytes) {
-    if(player.internalIndex > player.internalBuffer.length) {
-        console.log("Out of bounds error reading internal buffer: " + player.internalIndex + " > " + player.internalBuffer.length);
+    if(player.internalIndex-1 > player.internalBuffer.length) {
+        console.log("Out of bounds error reading internal buffer: ", player.internalIndex, " > ", player.internalBuffer.length-1);
     }
     var data = player.internalBuffer.slice(player.internalIndex, bytes + player.internalIndex);
     player.internalIndex += bytes;
@@ -63,16 +70,94 @@ export function readBytes(player, bytes) {
 }
 
 /**
- * Reads a VarLong from the network stream
+ * Reads a Unsigned Short from the network stream
  * 
  * @param {Player} player
  * Player to read from
  * @return {number} value
- * Value of the VarLong that has been read
+ * Value of the Unsigned Shor that has been read
  */
 export function readUShort(player) {
     var buffer = readBytes(player, 2);
     return buffer.readUIntBE(0, 2);
+}
+
+/**
+ * Reads a Float from the network stream
+ * 
+ * @param {Player} player
+ * Player to read from
+ * @return {number} value
+ * Value of the Float that has been read
+ */
+export function readFloat(player) {
+    var buffer = readBytes(player, 4);
+    return buffer.readFloatBE(0);
+}
+
+/**
+ * Reads a Double from the network stream
+ * 
+ * @param {Player} player
+ * Player to read from
+ * @return {number} value
+ * Value of the Double that has been read
+ */
+export function readDouble(player) {
+    var buffer = readBytes(player, 8);
+    return buffer.readDoubleBE(0);
+}
+
+
+/**
+ * Reads a Boolean from the network stream
+ * 
+ * @param {Player} player
+ * Player to read from
+ * @return {number} value
+ * Value of the Boolean that has been read
+ */
+export function readBoolean(player) {
+    var byte = readBytes(player, 1).readInt8(0);
+    return (byte === 0 ? false : true);
+}
+
+/**
+ * 
+ * @param {Player} player 
+ * Player to read from
+ * @return {Position}
+ */
+export function readPosition(player) {
+    var data = readBytes(player, 8);
+    var x = data.readUInt32BE(0) >>> 6;
+    var zHigh = (data.readUInt32BE(2) & 0x003FFFFF) << 4;
+    var zLow = (data.readUInt32BE(4) & 0x0000F000) >> 12;
+    var z = zLow | zHigh;
+    var y = data.readUInt32BE(4) & 0x00000FFF;
+    if (x >= 0x02000000) x -= 67108864;
+    if (z >= 0x02000000) z -= 67108864;
+    //if (y >= 0x800)       y -= 0x1000;
+    return new Position(x, y, z);
+}
+
+/**
+ * @param {Position} value
+ * @param {Player} bufferObject
+ */
+export function writePosition(x, y, z, bufferObject) {
+    // ((x & 0x3FFFFFF) << 38) | ((z & 0x3FFFFFF) << 12) | (y & 0xFFF)
+    var data = Buffer.alloc(8);
+    var longHigh = 0;
+    var longLow = 0;
+    if (x < 0) x = (~Math.abs(x)) + 1;
+    if (z < 0) z = (~Math.abs(x)) + 1;
+    longHigh |= (x & 0x3FFFFFF) << 6;
+    longLow |= (y & 0xFFF);
+
+    data.writeUInt32BE(longHigh, 0);
+    data.writeUInt32BE(longLow, 4);
+    
 }
 
 /**
@@ -245,6 +330,30 @@ export function writeString(string, n, bufferObject) {
 }
 
 /**
+ * Writes a float to the buffer object
+ * 
+ * @param {number} value 
+ * @param {Object} bufferObject 
+ */
+export function writeFloat(value, bufferObject) {
+    var temp = Buffer.alloc(4);
+    temp.writeFloatBE(value, 0);
+    appendData(bufferObject, temp);
+}
+
+/**
+ * Writes a double to the buffer object
+ * 
+ * @param {number} value 
+ * @param {Object} bufferObject 
+ */
+export function writeDouble(value, bufferObject) {
+    var temp = Buffer.alloc(8);
+    temp.writeDoubleBE(value, 0);
+    appendData(bufferObject, temp);
+}
+
+/**
  * Writes a string to a buffer
  * 
  * @param {any} json 
@@ -367,22 +476,91 @@ export function writeNbt(value, bufferObject) {
     
 }
 
-export function writeHeightmapPlaceholder(bufferObject) {
+export function writeNBitLong(n, value, bufferObject) {
+    if (n % 8 !== 0) throw new Error("no");
+    
+    var longs = [];
+    var longLow = 0;
+    var longHigh = 0;
+    for(var i = 0; i < 1; i++) {
+        var longOffset = (i * 9) % 64;
+        if(longOffset < 64 && longOffset + n - 1 >= 64) {
+            longHigh |= (value << longOffset) & 0xFFFFFF;
+            var temp = Buffer.alloc(8);
+            temp.writeInt32BE(longHigh);
+            temp.writeInt32BE(longLow, 4);
+            longs.push(temp);
+            longLow = longHigh = 0;
+            longLow |= value >> (64 - longOffset);
+        } else if(longOffset < 32 && longOffset + n - 1 >= 32) {
+            longLow |= (value << longOffset) & 0xFFFFFF;
+            longHigh |= value >> (32 - longOffset - 1);
+        } else if(longOffset < 32) {
+            longLow |= value << longOffset;
+        } else {
+            longHigh |= value << longOffset;
+        }
+        if(64 - longOffset == 9) {
+            var temp = Buffer.alloc(8);
+            temp.writeInt32BE(longHigh);
+            temp.writeInt32BE(longLow, 4);
+            longs.push(temp);
+            longLow = longHigh = 0;
+        }
+    }
+
+    writeByteArray(longs, bufferObject);
+}
+
+export function writeHeightmap(bufferObject) {
     function writeStr(name) {
         var out = Buffer.from(name, 'utf-8');
         writeUShort(name.length, bufferObject);
         appendData(bufferObject, out);
     }
     
+    var longs = [];
+    var longLow = 0;
+    var longHigh = 0;
+    for(var i = 0; i < 256; i++) {
+        // Testing maxHeight
+        var maxHeight = 256;
+        var longOffset = (i * 9) % 64;
+        if(longOffset < 64 && longOffset + 9 - 1 >= 64) {
+            longHigh |= (maxHeight << longOffset) & 0xFFFFFF;
+            var temp = Buffer.alloc(8);
+            temp.writeInt32BE(longHigh);
+            temp.writeInt32BE(longLow, 4);
+            longs.push(temp);
+            longLow = longHigh = 0;
+            longLow |= maxHeight >> (64 - longOffset);
+        } else if(longOffset < 32 && longOffset + 9 - 1 >= 32) {
+            longLow |= (maxHeight << longOffset) & 0xFFFFFF;
+            longHigh |= maxHeight >> (32 - longOffset - 1);
+        } else if(longOffset < 32) {
+            longLow |= maxHeight << longOffset;
+        } else {
+            longHigh |= maxHeight << longOffset;
+        }
+        if(64 - longOffset == 9) {
+            var temp = Buffer.alloc(8);
+            temp.writeInt32BE(longHigh);
+            temp.writeInt32BE(longLow, 4);
+            longs.push(temp);
+            longLow = longHigh = 0;
+        }
+    }
+
+
     // Compound
     writeByte(0x0A, bufferObject); // Type ID (Compound)
     writeStr("Hightmap"); // Name
 
     // Long array
-    writeByte(0x04, bufferObject); // Type ID (TAG_List)
+    writeByte(0x0C, bufferObject); // Type ID (TAG_Long_Array)
     writeStr("MOTION_BLOCKING"); // Name
-    writeInt(64, bufferObject); // Length
-    writeByteArray(Buffer.alloc(8*64), bufferObject, false); // Values
+    writeInt(longs.length, bufferObject); // Length
+    writeByteArray(Buffer.concat(longs), bufferObject, false); // Write the long boi
     
     writeByte(0x00, bufferObject); // End Compound
 } 
@@ -402,21 +580,26 @@ export function writeHeightmapPlaceholder(bufferObject) {
  * The name of the packet used for logging
  */
 export function writePacket(packetID, data, player, state, name) {
-    var dataDuplicate = createBufferObject();
-    prependData(dataDuplicate, data.b);
-    var bufferObject = createBufferObject();
-    var temp = createBufferObject();
-    writeVarInt(packetID, temp); // Packet ID
-    prependData(dataDuplicate, temp.b);
-    writeVarInt(dataDuplicate.b.length, bufferObject); // Length
-    appendData(bufferObject, dataDuplicate.b);
-    if(player.useEncryption) {
-        player.cipher.write(bufferObject.b);
-    } else {
-        player.tcpSocket.write(bufferObject.b);
+    try {
+        var dataDuplicate = createBufferObject();
+        prependData(dataDuplicate, data.b);
+        var bufferObject = createBufferObject();
+        var temp = createBufferObject();
+        writeVarInt(packetID, temp); // Packet ID
+        prependData(dataDuplicate, temp.b);
+        writeVarInt(dataDuplicate.b.length, bufferObject); // Length
+        appendData(bufferObject, dataDuplicate.b);
+        if(player.useEncryption) {
+            player.cipher.write(bufferObject.b);
+        } else {
+            player.tcpSocket.write(bufferObject.b);
+        }
+        const clientName = player.username || player.tcpSocket.remoteAddress.substr(7);
+        if (!(['ChunkData', 'ChatMessage', 'KeepAlive'].includes(name)))
+            console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ S->C ~~ " + state + " ~ " + name);
+    } catch(e) {
+        console.error(e.stack);
     }
-    const clientName = player.username || player.tcpSocket.remoteAddress;
-    console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ S->C ~~ " + state + " ~ " + name);
 }
 
 /**
