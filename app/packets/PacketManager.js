@@ -1,7 +1,5 @@
+import Player from "../Player";
 
-'use strict';
-
-const Player = require('../player');
 var utils = require('./../utils');
 
 /**

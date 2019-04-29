@@ -1,8 +1,6 @@
-
-'use strict'
+import Player from "./Player";
 
 var net = require('net');
-var Player = require('./player');
 var crypto = require('crypto');
 var https = require('https');
 var Position = require('./world/Position.js');
@@ -61,7 +59,7 @@ export function resetInternalBufferUsingDecipher(player) {
  * Data that has been read
  */
 export function readBytes(player, bytes) {
-    if(player.internalIndex-1 > player.internalBuffer.length) {
+    if(player.internalIndex > player.internalBuffer.length) {
         console.log("Out of bounds error reading internal buffer: ", player.internalIndex, " > ", player.internalBuffer.length-1);
     }
     var data = player.internalBuffer.slice(player.internalIndex, bytes + player.internalIndex);
@@ -130,7 +128,6 @@ export function readBoolean(player) {
  */
 export function readPosition(player) {
     var data = readBytes(player, 8);
-    console.log(data.toString('hex'));
     var x = data.readUInt32BE(0) >>> 6;
     var zHigh = (data.readUInt32BE(2) & 0x003FFFFF) << 4;
     var zLow = (data.readUInt32BE(4) & 0x0000F000) >> 12;
@@ -287,6 +284,28 @@ export function writeByteArray(bytes, bufferObject, writeLength) {
     if(writeLength) writeVarInt(bytes.length, bufferObject);
     appendData(bufferObject, Buffer.from(bytes));
 }
+
+/**
+ * Writes an angle to the buffer
+ * 
+ * @param {number} degrees 
+ * The amount of degrees to write to the buffer
+ * @param {Object} bufferObject 
+ * The object containing the buffer to write to
+ */
+export function writeAngle(degrees, bufferObject) {
+    if(degrees > 360 || degrees < -360) {
+        var negative = degrees < 0 ? true : false;
+        degrees = Math.abs(degrees);
+        var multiplier = Math.floor(degrees / 360);
+        degress -= 360 * multiplier;
+        if(negative) degrees = -degrees;
+    }
+    var angle = 360 / degrees;
+    angle = Math.floor(256 * angle);
+    writeByte(angle, bufferObject);
+}
+
 
 /**
  * Reads a byte array from the network stream
@@ -591,7 +610,7 @@ export function writePacket(packetID, data, player, state, name) {
             player.tcpSocket.write(bufferObject.b);
         }
         const clientName = player.username || player.tcpSocket.remoteAddress.substr(7);
-        if (!(['ChunkData', 'ChatMessage', 'KeepAlive'].includes(name)))
+        if (!(['ChunkData', 'ChatMessage', 'KeepAlive', 'Animation'].includes(name)))
             console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ S->C ~~ " + state + " ~ " + name);
     } catch(e) {
         console.error(e.stack);

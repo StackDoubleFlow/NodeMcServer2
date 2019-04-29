@@ -14,8 +14,8 @@ class Location extends Position {
   constructor(world, x, y, z, yaw, pitch) {
     super(x, y, z)
     this.world = world;
-    this.yaw = yaw;
-    this.pitch = pitch;
+    this.yaw = yaw || 0;
+    this.pitch = pitch || 0;
   }
 
   /**

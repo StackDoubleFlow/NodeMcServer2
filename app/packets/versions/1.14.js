@@ -1,7 +1,6 @@
-'use strict'
+import Player from "../../Player";
 
 var PacketManager = require('../PacketManager.js');
-var Player = require('../../Player.js');
 var utils = require('../../utils.js');
 var crypto = require('crypto');
 var https = require('https');
@@ -52,15 +51,15 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
     player.state = "play";
     player.server.onPlayerConnected(player);
 
-    player.setPosition(0, 32, 0);
+    player.location.y = 16;
 
     var playerPositionAndLook = utils.createBufferObject();
     // Quick 0 position test
-    utils.writeDouble(0, playerPositionAndLook); // X
-    utils.writeDouble(16, playerPositionAndLook); // Y
-    utils.writeDouble(0, playerPositionAndLook); // Z
-    utils.writeFloat(0, playerPositionAndLook); // Yaw
-    utils.writeFloat(0, playerPositionAndLook); // Pitch
+    utils.writeDouble(player.location.x, playerPositionAndLook); // X
+    utils.writeDouble(player.location.y, playerPositionAndLook); // Y
+    utils.writeDouble(player.location.z, playerPositionAndLook); // Z
+    utils.writeFloat(player.location.yaw, playerPositionAndLook); // Yaw
+    utils.writeFloat(player.location.pitch, playerPositionAndLook); // Pitch
     utils.writeByte(0, playerPositionAndLook);
     utils.writeVarInt(10121, playerPositionAndLook);
     utils.writePacket(0x35, playerPositionAndLook, player, "play", "PlayerPositionAndLook");
@@ -83,7 +82,7 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
     utils.writeJson({ "text": "Made by StackDoubleFlow & Allen" }, 32767, playerListHeaderAndFooter);
     utils.writePacket(0x53, playerListHeaderAndFooter, player, "play", "PlayerListHeaderAndFooter");
     
-    https.get("https://sessionserver.mojang.com/session/minecraft/profile/" + player.unformattedUUID, (res) => {
+    https.get("https://sessionserver.mojang.com/session/minecraft/profile/" + player.unformattedUUID + "?unsigned=false", (res) => {
         let data = '';
         res.on('end', () => HandleMojangProfileResponse(player, dataLength, res, data));
         res.on('data', (buf) => data += buf.toString());
@@ -100,38 +99,103 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
  * @param {string} data
  */
 function HandleMojangProfileResponse(player, dataLength, response, data) {
+    var useCache = false;
     if(response.statusCode !== 200) {
         console.log("Unable to retrieve player profile!");
-        return;
+        useCache = true;
     }
     data = JSON.parse(data);
     if(data["error"]) {
         console.log("(TODO: Try again later) Error getting player profile: " + data["error"]);
-        return;
+        useCache = true;
     }
-    console.log(data);
-    player.properties = data["properties"];
+
+    if(useCache) {
+        if(player.server.playerPropertyCache.has(player.username)) {
+            player.properties = player.server.playerPropertyCache.get(player.username);
+        } else {
+            player.kick("Authentication failed, please try again later");
+        }
+    } else {
+        player.properties = data["properties"];
+        player.server.playerPropertyCache.set(player.username, player.properties);
+    }
+    
     var playerInfo = utils.createBufferObject();
-    utils.writeVarInt(0, playerInfo);
-    utils.writeVarInt(player.server.onlinePlayers.length, playerInfo);
+    utils.writeVarInt(0, playerInfo); // Action (Add Player)
+    utils.writeVarInt(player.server.onlinePlayers.length, playerInfo); // Number of players
     player.server.onlinePlayers.forEach(plr => {
-        utils.writeUUID(plr, playerInfo);
-        utils.writeString(plr.username, 16, playerInfo);
-        utils.writeVarInt(plr.properties, playerInfo);
+        utils.writeUUID(plr, playerInfo); // UUID
+        utils.writeString(plr.username, 16, playerInfo); /// Username
+        utils.writeVarInt(plr.properties.length, playerInfo); // Number of properties
         plr.properties.forEach((property) => {
             console.log(property);
-            utils.writeString(property.name, 32767, playerInfo);
-            utils.writeString(property.value, 32767, playerInfo);
-            utils.writeByte(0, playerInfo);
+            utils.writeString(property.name, 32767, playerInfo); // Property name
+            utils.writeString(property.value, 32767, playerInfo); // Property value
+            utils.writeByte(1, playerInfo); // Is Property Signed (True)
+            utils.writeString(property.signature, 32767, playerInfo); // Yggdrasil's signature
         });
-        utils.writeVarInt(1, playerInfo);
-        utils.writeVarInt(player.ping, playerInfo);
-        utils.writeByte(0, playerInfo);
+        utils.writeVarInt(1, playerInfo); // Gamemode
+        utils.writeVarInt(player.ping, playerInfo); // Ping
+        utils.writeByte(0, playerInfo); // Has display name (False)
     });
-    //utils.writePacket(0x33, playerInfo, player, "play", "PlayerInfo");
+    utils.writePacket(0x33, playerInfo, player, "play", "PlayerInfo");
 
+    var playerInfo = utils.createBufferObject();
+    utils.writeVarInt(0, playerInfo); // Action (Add Player)
+    utils.writeVarInt(1, playerInfo); // Number of players
+    utils.writeUUID(player, playerInfo) // UUID
+    utils.writeString(player.username, 16, playerInfo); /// Username
+    utils.writeVarInt(player.properties.length, playerInfo); // Number of properties
+    player.properties.forEach((property) => {
+        utils.writeString(property.name, 32767, playerInfo); // Property name
+        utils.writeString(property.value, 32767, playerInfo); // Property value
+        utils.writeByte(1, playerInfo); // Is Property Signed (True)
+        utils.writeString(property.signature, 32767, playerInfo); // Yggdrasil's signature
+    });
+    utils.writeVarInt(1, playerInfo); // Gamemode
+    utils.writeVarInt(player.ping, playerInfo); // Ping
+    utils.writeByte(0, playerInfo); // Has display name (False)
+    player.server.writePacketToAll(0x33, playerInfo, "play", "PlayerInfo", [player]);
 
+    const declareCommands = utils.createBufferObject();
+    utils.writeVarInt(player.server.commandHandler.commands.size + 1, declareCommands); // Num of elements in array
+    utils.writeByte(0, declareCommands); // Flags (root)
+    utils.writeVarInt(player.server.commandHandler.commands.size, declareCommands); // Num of children
+    for(let i = 1; i <= player.server.commandHandler.commands.size; i++) utils.writeVarInt(i, declareCommands);
+    player.server.commandHandler.commands.forEach((command, name) => {
+        utils.writeByte(0x5, declareCommands); // Flags (literal, executable)
+        utils.writeVarInt(0, declareCommands); // Num of children
+        utils.writeString(name, 32767, declareCommands); // Command name
+    });
+    utils.writeVarInt(0, declareCommands); // Root node index
+    utils.writePacket(0x11, declareCommands, player, "play", "DeclareCommands");
+    
 
+    player.server.onlinePlayers.forEach((plr) => {
+        if(plr === player) return;
+        var spawnPlayer = utils.createBufferObject();
+        utils.writeVarInt(plr.entityID, spawnPlayer);
+        utils.writeUUID(plr, spawnPlayer);
+        utils.writeDouble(plr.location.x, spawnPlayer);
+        utils.writeDouble(plr.location.y, spawnPlayer);
+        utils.writeDouble(plr.location.z, spawnPlayer);
+        utils.writeAngle(plr.location.yaw, spawnPlayer);
+        utils.writeAngle(plr.location.pitch, spawnPlayer);
+        utils.writeByte(0xFF, spawnPlayer);
+        utils.writePacket(0x05, spawnPlayer, player, "play", "SpawnPlayer");
+    });
+
+    var spawnPlayer = utils.createBufferObject();
+    utils.writeVarInt(player.entityID, spawnPlayer);
+    utils.writeUUID(player, spawnPlayer);
+    utils.writeDouble(player.location.x, spawnPlayer);
+    utils.writeDouble(player.location.y, spawnPlayer);
+    utils.writeDouble(player.location.z, spawnPlayer);
+    utils.writeAngle(player.location.yaw, spawnPlayer);
+    utils.writeAngle(player.location.pitch, spawnPlayer);
+    utils.writeByte(0xFF, spawnPlayer);
+    player.server.writePacketToAll(0x05, spawnPlayer, "play", "SpawnPlayer", [player]);
 }
 
 const version = {
@@ -144,22 +208,6 @@ const version = {
         stat: {},
         login: {},
         play: {}
-    },
-    senders: {
-        none: {
-
-        },
-        stat: {
-
-        },
-        logn: {
-            sendLoginRequest: (player, UUID, username) => {
-
-            }
-        },
-        play: {
-
-        }
     },
     inboundPackets: {
         none: {
@@ -243,7 +291,7 @@ const version = {
                     }
                 ]
             },
-            0x10: {
+            0x11: {
                 name: "PlayerPosition",
                 parameters: [
                     {
@@ -262,10 +310,9 @@ const version = {
                         name: "onGround",
                         type: "boolean"
                     }
-                ],
-                log: true
+                ]
             },
-            0x12: {
+            0x13: {
                 name: "PlayerLook",
                 parameters: [
                     {
@@ -280,8 +327,7 @@ const version = {
                         name: "onGround",
                         type: "boolean"
                     }
-                ],
-                log: true
+                ]
             },
             0x1A: {
                 name: "PlayerDigging",
@@ -298,8 +344,53 @@ const version = {
                         name: "face",
                         type: "byte"
                     }
-                ],
-                log: true
+                ]
+            },
+            0x2C: {
+                name: "PlayerBlockPlacement",
+                parameters: [
+                    {
+                        name: "hand",
+                        type: "varint"
+                    },
+                    {
+                        name: "location",
+                        type: "position"
+                    },
+                    {
+                        name: "face",
+                        type: "varint"
+                    },
+                    {
+                        name: "cursorPositionX",
+                        type: "float"
+                    },
+                    {
+                        name: "cursorPositionY",
+                        type: "float"
+                    },
+                    {
+                        name: "cursorPositionZ",
+                        type: "float"
+                    },
+                    {
+                        name: "insideBlock",
+                        type: "boolean"
+                    }
+                ]
+            },
+            0x2A: {
+                name: "Animation",
+                parameters: [
+                    {
+                        name: "hand",
+                        type: "varint",
+                        values: {
+                            "main": 0,
+                            "offhand": 1
+                        }
+                    }
+                ]
             },
 
             // TODO
@@ -318,9 +409,7 @@ const version = {
             0x0D: placeholder("QueryEntityNBT"),
             0x0E: placeholder("UseEntity"),
             0x10: placeholder("LockDifficulty"),
-            0x11: placeholder("PlayerPosition", false),
             0x12: placeholder("PlayerPositionAndLook", false),
-            0x13: placeholder("PlayerLook", false),
             0x14: placeholder("Player"),
             0x15: placeholder("VehicleMove"),
             0x16: placeholder("SteerBoat"),
@@ -342,9 +431,7 @@ const version = {
             0x27: placeholder("UpdateJigsawBlock"),
             0x28: placeholder("UpdateStructureBlock"),
             0x29: placeholder("UpdateSign"),
-            0x2A: placeholder("Animation"),
             0x2B: placeholder("Spectate"),
-            0x2C: placeholder("PlayerBlockPlacement"),
             0x2D: placeholder("UseItem")
         }
     },
@@ -464,12 +551,8 @@ const version = {
             ChatMessage: (player, dataLength) => {
                 var chatMessage = utils.readString(player, 256);
                 if(chatMessage.startsWith("/")) {
-                    var command = chatMessage.split(" ")[0].substr(1);
-                    var commandArguments = chatMessage.split(" ").splice(0, 1);
-                    if(command == "leave") {
-                        player.kick("Bye bye!");
-                    }
-                    console.log(player.username + " issued the command: " + chatMessage);
+                    console.log("player command", chatMessage.substr(1));
+                    player.server.commandHandler.runCommand(player, chatMessage.substr(1));
                     return;
                 }
                 console.log(player.username + ": " + chatMessage);
@@ -483,7 +566,7 @@ const version = {
                             "color": "dark_gray"
                         },
                         {
-                            "text": chatMessage
+                            "text": chatMessage.replace(/[^a-zA-Z0-9~`!@#$%^&*()_=+* \[\];':",.<>?/\\-]/g, '*')
                         }
                     ]
                 };
@@ -495,54 +578,88 @@ const version = {
              * @param {number} dataLength
              */
             KeepAlive: (player, dataLength) => {
-                var time = utils.readLong(player);
-                var ping = new Date().getTime() - time;
-                player.ping = ping;
+                var keepAliveID = utils.readLong(player);
+                var timeSinceLastKeepAlive = new Date().getTime() - player.server.timeOfLastKeepAlive;
+                player.ping = timeSinceLastKeepAlive;
+                var playerInfo = utils.createBufferObject();
+                utils.writeVarInt(2, playerInfo); // Action (Update Latency)
+                utils.writeVarInt(1, playerInfo); // Number of players
+                utils.writeUUID(player, playerInfo) // UUID
+                utils.writeVarInt(player.ping, playerInfo);
+                player.server.writePacketToAll(0x33, playerInfo, "play", "PlayerInfo");
             },
             /**
              * @param {Player} player
              * @param {number} dataLength
              */
             PlayerDigging: (player, dataLength) => {
-                console.log("Block break");
-                try {
-                    const status = utils.readVarInt(player);
-                    const pos = utils.readPosition(player);
-                    const face = utils.readBytes(player, 1);
+                const status = utils.readVarInt(player);
+                const pos = utils.readPosition(player);
+                const face = utils.readBytes(player, 1);
 
-                    console.log(`Status: ${status}, Location: (${pos.x}, ${pos.y}, ${pos.z})`);
-                    /*
-                    var bufferObject = utils.createBufferObject();
-                    utils.writeByteArray(Buffer.alloc(8), bufferObject, false);
-                    utils.writePosition(pos, bufferObject);
-                    utils.writeVarInt(1, bufferObject);
-                    player.server.writePacketToAll(0x0B, bufferObject, "play", "BlockUpdate"); */
-                } catch(e) {
-                    console.error(e.stack);
+                if(status === 0) {
+                    const blockBreak = utils.createBufferObject();
+                    utils.writePosition(pos, blockBreak);
+                    utils.writeVarInt(0, blockBreak);
+
+                    const blockBreakParticle = utils.createBufferObject();
+                    utils.writeInt(2001, blockBreakParticle);
+                    utils.writePosition(pos, blockBreakParticle);
+                    utils.writeInt(1, blockBreakParticle);
+                    utils.writeByte(0, blockBreakParticle);
+
+                    player.server.writePacketToAll(0x0B, blockBreak, "play", "BlockUpdate", [player]);
+                    player.server.writePacketToAll(0x22, blockBreakParticle, "play", "Effect", [player]);
                 }
+                
+                
             },
             /**
              * @param {Player} player
              * @param {number} dataLength
              */
             PlayerPosition: (player, dataLength) => {
-                var x = utils.readDouble(player);
-                var y = utils.readDouble(player);
-                var z = utils.readDouble(player);
-                var onGround = utils.readBoolean(player);
-                console.log("Position");
-                player.setPosition(x, y, z);
-                console.log(x, y, z);
+                var oldLocation = player.location;
+                player.location.x = utils.readDouble(player);
+                player.location.y = utils.readDouble(player);
+                player.location.z = utils.readDouble(player);
+                var delta = player.location;
+                delta.subLocation(oldLocation);
+                console.log(delta.x, delta.y, delta.z);
+                player.onGround = utils.readBoolean(player);
             },
             /**
              * @param {Player} player
              * @param {number} dataLength
              */
             PlayerLook: (player, dataLength) => {
-                var yaw = utils.readFloat(player);
-                var pitch = utils.readFloat(player);
-                var onGround = utils.readBoolean(player);
-                player.setRotation(yaw, pitch);
+                player.location.yaw = utils.readFloat(player);
+                player.location.pitch = utils.readFloat(player);
+                player.onGround = utils.readBoolean(player);
+            },
+            /**
+             * @param {Player} player
+             * @param {number} dataLength
+             */
+            PlayerBlockPlacement: (player, dataLength) => {
+                var hand = utils.readVarInt(player);
+                var location = utils.readPosition(player);
+                var face = utils.readVarInt(player);
+                var cursorX = utils.readFloat(player);
+                var cursorY = utils.readFloat(player);
+                var cursorZ = utils.readFloat(player);
+                var insideBlock = utils.readBoolean(player);
+            },
+            /**
+             * @param {Player} player
+             * @param {number} dataLength
+             */
+            Animation: (player, dataLength) => {
+                const hand = utils.readVarInt(player);
+                var animation = utils.createBufferObject();
+                utils.writeVarInt(player.entityID, animation);
+                utils.writeByte(hand == 0 ? 0 : 3, animation);
+                player.server.writePacketToAll(0x06, animation, "play", "Animation", [player]);
             },
 
             // TODO
@@ -580,9 +697,7 @@ const version = {
             CreativeInventoryAction: () => { },
             UpdateStructureBlock: () => { },
             UpdateSign: () => { },
-            Animation: () => { },
             Spectate: () => { },
-            PlayerBlockPlacement: () => { },
             UseItem: () => { }
         }
     }

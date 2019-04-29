@@ -8,7 +8,7 @@ var MinecraftServer = require('./MinecraftServer');
 var crypto = require('crypto');
 const Location = require('./world/Location');
 
-class Player {
+export default class Player {
     /**
      * Initializes a player object
      * 
@@ -21,7 +21,7 @@ class Player {
         /**
          * @type {Location}
          */
-        this.location = new Location(server.world);
+        this.location = new Location(server.world, 0, 0, 0, 0, 0);
         /**
          * The player's network state
          * @type {string}
@@ -42,6 +42,7 @@ class Player {
         this.packetManager = new PacketManager();
         /**
          * The server instance
+         * @type {Server}
          */
         this.server = server;
         /**
@@ -105,9 +106,9 @@ class Player {
          */
         this.ping = -1;
         /**
-         * The player position
+         * Is true when the player is on the ground
          */
-        this.x, this.y, this.z, this.yaw, this.pitch = 0;
+        this.onGround = true;
 
         this.tcpSocket.on('readable', this.onStreamReadable.bind(this));
         this.tcpSocket.on('end', this.onStreamEnd.bind(this));
@@ -159,7 +160,7 @@ class Player {
             var packetID = utils.readVarInt(this);
             this.packetManager.handlePacket(length, this.state, packetID, this);
         } catch(e) {
-            //console.error(e.stack);
+            console.error(e.stack);
             /* this.kick({
                 "text": "Internal server error",
                 "color": "red"
@@ -211,73 +212,4 @@ class Player {
         this.tcpSocket.end();
     }
 
-    /**
-     * Sets a player position
-     * 
-     * @param {number} x
-     * The new x position
-     * @param {number} y
-     * The new y position
-     * @param {number} z
-     * The new z position
-     */
-    setPosition(x, y, z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    /**
-     * Sets a player position and rotation
-     * 
-     * @param {number} x
-     * The new x position
-     * @param {number} y
-     * The new y position
-     * @param {number} z
-     * The new z position
-     * @param {number} yaw
-     * The new yaw rotation
-     * @param {number} pitch
-     * The new pitch rotation
-     */
-    setPositionAndRotation(x, y, z, yaw, pitch) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.yaw = yaw;
-        this.pitch = pitch;
-    }
-
-    /**
-     * Sets a player and rotation
-     * 
-     * @param {number} yaw
-     * The new yaw rotation
-     * @param {number} pitch
-     * The new pitch rotation
-     */
-    setRotation(yaw, pitch) {
-        this.yaw = yaw;
-        this.pitch = pitch;
-    }
-
-    /**
-     * Moves a player
-     * 
-     * @param {number} x
-     * The x value to move the player by
-     * @param {number} y
-     * The y value to move the player by
-     * @param {number} z
-     * The z value to move the player by
-     */
-    move(x, y, z) {
-        this.x += x;
-        this.y += y;
-        this.z += z;
-    }
-
 }
-
-module.exports = Player;

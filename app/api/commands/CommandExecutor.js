@@ -2,7 +2,7 @@ import CommandHandler from "./CommandHandler";
 import CommandContext from "./CommandContext";
 import Plugin from "../plugins/Plugin";
 
-class CommandExecutor {
+export default class CommandExecutor {
     /**
      * @param {CommandHandler} handler
      * @param {Plugin} plugin 
@@ -32,5 +32,3 @@ class CommandExecutor {
         return this.callback.bind(this.plugin)(context);
     }
 }
-
-module.exports = CommandExecutor;

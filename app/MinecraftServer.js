@@ -1,13 +1,14 @@
-
-'use strict'
+import Player from "./Player";
 
 var net = require('net');
-var Player = require('./player');
 var fs = require('fs');
 var crypto = require('crypto');
 var World = require('./world/World');
 var utils = require('./utils');
 var path = require('path');
+const ConsoleInterface = require("./console/ConsoleInterface.js");
+const Item = require("./world/Item");
+const CommandHandler = require("./api/commands/CommandHandler").default;
 
 class MinecraftServer {
 
@@ -19,7 +20,7 @@ class MinecraftServer {
         console.log("Starting server...");
         this.tcpServer = net.createServer(this.onClientConnected.bind(this));
         /**
-         * @type {Player}
+         * @type {Array<Player>}
          */
         this.onlinePlayers = [];
 
@@ -73,14 +74,53 @@ class MinecraftServer {
 
         this.world = new World(this.config["world_file"]);
 
+        /**
+         * @type {ConsoleInterface}
+         */
+        this.console = new ConsoleInterface(this);
+        Item.setRegistry(require("./generated_data/1.14/reports/registries.json")['minecraft:item']);
+        /**
+         * @type {CommandHandler}
+         */
+        this.commandHandler = new CommandHandler(this);
+        
+        /**
+         * Player properties
+         * @type {Map<string, Object>}
+         */
+        this.playerPropertyCache = new Map();
+
+        /**
+         * The time of the last keep alive sent 
+         */
+        this.timeOfLastKeepAlive = 0;
+
         setInterval(this.sendKeepAlive.bind(this), 15000);
+
+        this.commandHandler.addCommand(this, {name: "stop"}, (context) => {
+            this.stop();
+        });
+        this.commandHandler.addCommand(this, {name: "leave"}, (context) => {
+            if(!context.isSenderPlayer()) return;
+            context.sender.kick("Bye bye!");
+        });
+        this.commandHandler.addCommand(this, {name: "eval"}, (context) => {
+            context.sender.sendMessage("" + eval(context.argString));
+        });
+
+        this.username = "CONSOLE";
+        this.uuid = null;
+    }
+
+    sendMessage(msg) {
+        console.log(msg);
     }
 
     sendKeepAlive() {
         var keepAlive = utils.createBufferObject();
-        utils.writeLong(new Date().getTime(), keepAlive);
+        this.timeOfLastKeepAlive = new Date().getTime();
+        utils.writeLong(this.timeOfLastKeepAlive, keepAlive);
         this.writePacketToAll(0x20, keepAlive, "play", "KeepAlive");
-
     }
 
     /**
@@ -120,6 +160,8 @@ class MinecraftServer {
                 player.chatName("gray")
             ]
         });
+        this.sendKeepAlive();
+        
     }
 
     /**
@@ -154,6 +196,13 @@ class MinecraftServer {
                 player.chatName("gray")
             ]
         }, 1);
+
+        var playerInfo = utils.createBufferObject();
+        utils.writeVarInt(4, playerInfo); // Action (Remove Player)
+        utils.writeVarInt(1, playerInfo); // Number of players
+        utils.writeUUID(player, playerInfo) // UUID
+        this.writePacketToAll(0x33, playerInfo, "play", "PlayerInfo");
+
     }
 
     /**
@@ -178,9 +227,12 @@ class MinecraftServer {
      * The state of the packet used for logging
      * @param {string} name
      * The name of the packet used for logging
+     * @param {Array<Player>} exeptions
+     * Players to not send the packet to
      */
-    writePacketToAll(packetID, data, state, name) {
+    writePacketToAll(packetID, data, state, name, exeptions=[]) {
         for(let player of this.onlinePlayers) {
+            if(exeptions.includes(player)) continue;
             try {
                 utils.writePacket(packetID, data, player, state, name);
             } catch(e) {
@@ -199,6 +251,22 @@ class MinecraftServer {
         utils.writeByte(type, response);
 
         this.writePacketToAll(0x0E, response, "play", "ChatMessage");
+    }
+
+    stop() {
+        this.broadcast({
+            text: "Stopping server...",
+            color: "red"
+        });
+
+        for (let player of this.onlinePlayers) {
+            player.kick({
+                text: "Server closed",
+                color: "red"
+            })
+        }
+
+        process.exit();
     }
 }
 
