@@ -6,7 +6,7 @@ module.exports = {
     },
     world: {
         entities: {
-            Entity: null
+            Entity: null,
             LivingEntity: null,
             UtilityEntity: null,
             HostileEntity: null,

@@ -1,4 +1,5 @@
-module.exports = {
+const versions = {
+  defaultVersion: 477,
   supportedVersions: [ 477 ],
 
   // id, name
@@ -55,5 +56,21 @@ module.exports = {
   "1.7.6": 5,
   "1.7.5": 4,
   "1.7.3": 4,
-  "1.7.2": 4
+  "1.7.2": 4,
+
+  /**
+   * Get the version number from a version name or number
+   * 
+   * @param {(string|number)} version string or number
+   * @return {number} Protocol version number
+   * @throws {Error} Will throw if version name or number is not found
+   */
+  getVersonNumber: (version) => {
+    if (!version) return versions.defaultVersion;
+    if (!(version in versions)) throw new Error("Version not found");
+    if (typeof version === "number") return version;
+    return versions[version];
+  }
 }
+
+module.exports = versions;

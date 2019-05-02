@@ -72,7 +72,7 @@ class MinecraftServer {
 
         console.log("Loading world");
 
-        this.world = new World(this.config["world_file"]);
+        this.world = new World("test_world");
 
         /**
          * @type {ConsoleInterface}

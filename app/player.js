@@ -1,6 +1,8 @@
 
 'use strict'
 
+import { inflate } from 'zlib';
+
 var net = require('net');
 var utils = require('./utils');
 var PacketManager = require('./packets/PacketManager');
@@ -42,7 +44,7 @@ export default class Player {
         this.packetManager = new PacketManager();
         /**
          * The server instance
-         * @type {Server}
+         * @type {MinecraftServer}
          */
         this.server = server;
         /**
@@ -109,10 +111,30 @@ export default class Player {
          * Is true when the player is on the ground
          */
         this.onGround = true;
+        /**
+         * A bitmask containing all the enabled skin parts
+         */
+        this.displayedSkinParts = 0;
+        this.isSneaking = false;
+        this.isSprinting = false;
 
         this.tcpSocket.on('readable', this.onStreamReadable.bind(this));
         this.tcpSocket.on('end', this.onStreamEnd.bind(this));
-        this.tcpSocket.on('error', (e) => console.error(e.stack));
+        this.tcpSocket.on('error', this.onStreamEnd.bind(this));
+    }
+
+    getStatusMetaDataBitMask() {
+        let n = 0;
+
+        // TODO: if (this.onFire) n |= 0x01;
+        if (this.isSneaking) n |= 0x02;
+        if (this.isSprinting) n |= 0x08;
+        // TODO: if (this.isSwimming) n |= 0x10;
+        // TODO: if (this.isInvisible) n |= 0x20;
+        // TODO: if (this.isGlowing) n |= 0x40;
+        // TODO: if (this.isFlyingWithElytra) n |= 0x80;
+
+        return n;
     }
 
     /**
@@ -148,6 +170,7 @@ export default class Player {
         if(this.isOnline) {
             this.server.onPlayerDisconnected(this);
         }
+        this.isOnline = false;
     }
 
     /**
@@ -156,9 +179,22 @@ export default class Player {
      */
     readNextPacket() {
         try {
-            var length = utils.readVarInt(this);
-            var packetID = utils.readVarInt(this);
-            this.packetManager.handlePacket(length, this.state, packetID, this);
+            if(this.usePacketCompression) {
+                var packetLength = utils.readVarInt(this);
+                var dataLength = utils.readVarInt(this);
+                if (dataLength !== 0) {
+                    utils.inflate(dataLength, this);
+                    var packetID = utils.readVarInt(this, true);
+                    this.packetManager.handlePacket(dataLength-packetID.len, this.state, packetID.val, this);
+                } else {
+                    var packetID = utils.readVarInt(this);
+                    this.packetManager.handlePacket(packetLength - 1, this.state, packetID, this);
+                }
+            } else {
+                var length = utils.readVarInt(this);
+                var packetID = utils.readVarInt(this);
+                this.packetManager.handlePacket(length, this.state, packetID, this);
+            }
         } catch(e) {
             console.error(e.stack);
             /* this.kick({

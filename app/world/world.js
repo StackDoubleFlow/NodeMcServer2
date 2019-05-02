@@ -1,5 +1,6 @@
 var fs = require('fs');
 var utils = require('../utils.js');
+var zlib = require('zlib');
 
 /**
  * A minecraft world represented in my own format
@@ -14,13 +15,14 @@ class World {
      * 
      * @param {string} filename 
      */
-    constructor(filename) {
-        this.FilePath = "./" + filename;
-        var fileExists = fs.existsSync(filename);
-        if(!fileExists) {
-            this.generateWorld();
+    constructor(path) {
+        this.path = "./" + path;
+        var fileExists = fs.existsSync(path);
+        var isDirectory = fs.lstatSync(path).isDirectory();
+        if(isDirectory) {
+            this.loadWorld();
         } else {
-            this.checkWorldSignature();
+            console.log("Unable to load world!");
         }
     }
 
@@ -126,21 +128,13 @@ class World {
         return chunkSection.b;    
     }
 
-    generateChunk(x, y) {
-
-    }
 
     loadWorld() {
-
+        var levelData = fs.readFileSync(this.path + "/level.dat");
+        levelData = zlib.gunzipSync(levelData);
+        //console.log(utils.readNBT(levelData));
     }
 
-    generateWorld() {
-
-    }
-
-    checkWorldSignature() {
-
-    }
 }
 
 module.exports = World;

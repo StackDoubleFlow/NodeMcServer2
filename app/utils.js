@@ -4,6 +4,22 @@ var net = require('net');
 var crypto = require('crypto');
 var https = require('https');
 var Position = require('./world/Position.js');
+var zlib = require('zlib');
+
+export const types = {
+    read: {
+        boolean: readBoolean,
+        double: readDouble,
+        float: readFloat,
+        long: readLong,
+        position: readPosition,
+        string: readString,
+        ushort: readUShort,
+        varint: readVarInt,
+        varlong: readVarLong,
+        null: () => {}
+    }
+}
 
 /*
  * This is just a place to put things until I find a better place to put them.
@@ -23,6 +39,20 @@ export const createGetRequest = (url) => new Promise((resolve, reject) => {
         res.on('data', (buf) => data += buf.toString());
     })     .on('error', e => reject(e));
 });
+
+/**
+ * Used for compression
+ * 
+ * @param {number} length 
+ * @param {Player} player
+ */
+export function inflate(length, player) {
+    var data = player.internalBuffer.slice(player.internalIndex, player.internalIndex+length);
+    var inflatedData = zlib.inflateSync(data);
+    var dataToBeRead = player.internalBuffer.slice(player.internalIndex+length, player.internalBuffer.length-1);
+    player.internalBuffer = Buffer.concat([inflatedData, dataToBeRead]);
+    player.internalIndex = 0;
+}
 
 /**
  * Resets the internal buffer of the player using the data from the player
@@ -65,6 +95,66 @@ export function readBytes(player, bytes) {
     var data = player.internalBuffer.slice(player.internalIndex, bytes + player.internalIndex);
     player.internalIndex += bytes;
     return data;
+}
+
+export function readType(type, player, ...args) {
+    return types.read[type](player, ...args);
+}
+
+/**
+ * @param {string} param
+ * @param {Player} player
+ * Player to read from
+ * @return {Array} arguments
+ */
+export function readParameter(arg, player) {
+    /**
+     * @type {string}
+     */
+    let type = arg.type;
+    let isArray = arg.array;
+    let length = 1;
+
+    if (isArray) {
+        const value = [];
+        length = readType(arg.lengthType, player);
+    
+        for(let i = 0; i < length; i++) {
+            if(arg.parameters) {
+                const v = {};
+                for(let a of arg.parameters) {
+                    v[a.name] = readParameter(a, player);
+                }
+                value.push(v);
+            } else {
+                let v = readType(type, player, arg.max);
+                if(arg.values && v in arg.values)
+                    v = arg.values[v];
+                value.push(v);
+            }
+        }
+
+        return value;
+    } else {
+        let value = readType(type, player, arg.max);
+        if(arg.values && value in arg.values)
+            value = arg.values[value];
+        return value;
+    }
+}
+
+/**
+ * @param {object<string, *>} params
+ * @param {Player} player
+ * Player to read from
+ * @return {Array} arguments
+ */
+export function readParameters(params, player) {
+    const args = [];
+    for(let arg of params) {
+        args.push(readParameter(arg, player));
+    }
+    return args
 }
 
 /**
@@ -174,10 +264,11 @@ export function readString(player, n) {
  * 
  * @param {Player} player
  * Player to read from
+ * @param {boolean} returnLength
  * @return {number} value
  * Value of the VarInt that has been read
  */
-export function readVarInt(player) {
+export function readVarInt(player, returnLength=false) {
     var numRead = 0;
     var result = 0;
     var read;
@@ -190,7 +281,11 @@ export function readVarInt(player) {
             console.error("VarInt is too big");
         }
     } while ((read & 0b10000000) != 0);
-    return result;
+    if(returnLength) {
+        return { val: result, len: numRead };
+    } else {
+        return result;
+    }
 }
 
 /**
@@ -298,11 +393,10 @@ export function writeAngle(degrees, bufferObject) {
         var negative = degrees < 0 ? true : false;
         degrees = Math.abs(degrees);
         var multiplier = Math.floor(degrees / 360);
-        degress -= 360 * multiplier;
+        degrees -= 360 * multiplier;
         if(negative) degrees = -degrees;
     }
-    var angle = 360 / degrees;
-    angle = Math.floor(256 * angle);
+    var angle = Math.floor((degrees / 360) * 256);
     writeByte(angle, bufferObject);
 }
 
@@ -455,6 +549,18 @@ export function writeInt(value, buffer) {
 }
 
 /**
+ * Writes a short to the network stream
+ * 
+ * @param {number} value 
+ * @param {Object} bufferObject 
+ */
+export function writeShort(value, bufferObject) {
+    var temp = Buffer.alloc(2);
+    temp.writeInt16BE(value);
+    appendData(bufferObject, temp);
+}
+
+/**
  * Writes an unsigned short to the network stream
  * 
  * @param {number} value 
@@ -602,16 +708,34 @@ export function writePacket(packetID, data, player, state, name) {
         var temp = createBufferObject();
         writeVarInt(packetID, temp); // Packet ID
         prependData(dataDuplicate, temp.b);
-        writeVarInt(dataDuplicate.b.length, bufferObject); // Length
-        appendData(bufferObject, dataDuplicate.b);
+        if(player.usePacketCompression) {
+            if(data.b.length >= 500) {
+                temp = createBufferObject(); // Buffer containing uncompressed packet length
+                writeVarInt(dataDuplicate.b.length, temp); // Uncompressed packet length
+                dataDuplicate.b = zlib.deflateSync(dataDuplicate.b); // Compress packet
+                prependData(dataDuplicate, temp.b); // Put uncompressed packet length before packet data
+                writeVarInt(dataDuplicate.b.length, bufferObject); // Write length of uncompressed packet length + compressed data and packet ID length 
+                appendData(bufferObject, dataDuplicate.b); // Put that length because anything else
+            } else {
+                temp = createBufferObject(); // Buffer containing uncompressed packet length
+                writeVarInt(0, temp); // Uncompressed packet length (Zero since uncompressed)
+                prependData(dataDuplicate, temp.b); // Put uncompressed packet length before packet data
+                writeVarInt(dataDuplicate.b.length, bufferObject); // Write length of uncompressed packet length + compressed data and packet ID length 
+                appendData(bufferObject, dataDuplicate.b); // Put that length because anything else
+            }
+        } else {
+            writeVarInt(dataDuplicate.b.length, bufferObject); // Length
+            appendData(bufferObject, dataDuplicate.b);
+        }
+        
         if(player.useEncryption) {
             player.cipher.write(bufferObject.b);
         } else {
             player.tcpSocket.write(bufferObject.b);
         }
         const clientName = player.username || player.tcpSocket.remoteAddress.substr(7);
-        if (!(['ChunkData', 'ChatMessage', 'KeepAlive', 'Animation'].includes(name)))
-            console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ S->C ~~ " + state + " ~ " + name);
+        if (!(['ChunkData', 'ChatMessage', 'KeepAlive', 'Animation', "EntityLook", "EntityRelativeMove", "PlayerInfo"].includes(name)))
+            console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ S->C ~~ " + state + " ~ " + name + (player.usePacketCompression && data.b.length >= 500 ? " ~~ Compressed: Saved " + (data.b.length - bufferObject.b.length) + " bytes" : " ~~ Not Compressed"));
     } catch(e) {
         console.error(e.stack);
     }
@@ -659,6 +783,120 @@ export function minecraftHexDigest(hash) { //TODO: Clean-up
     digest = digest.replace(/^0+/g, '');
     if (negative) digest = '-' + digest;
     return digest;
+}
+
+/**
+ * Reads NBT data and puts it into an object
+ * 
+ * @param {Buffer} data 
+ * @return {Object} nbtStructure
+ */
+export function readNBT(data) {
+    var nbtStructure = {};
+    var readIndex = 0;
+    var returnValue = false;
+    /**
+     * @type {Array<string>}
+     */
+    var currentCompound = [];
+
+    /**
+     * @param {number} bytes 
+     * @return {Buffer} data;
+     */
+    function readBytes(bytes) {
+        var readData = data.slice(readIndex, readIndex + bytes);
+        readIndex += bytes;
+        return readData;
+    }
+
+    /**
+     * @param {string} name 
+     * @param {any} value 
+     */
+    function setValue(name, value) {
+        if(returnValue) return value;
+        //console.log(currentCompound.join(".") + "." + name);
+        var fullPath = "";
+        currentCompound.forEach(child => {
+            if(eval("currentCompound" + fullPath) == undefined) eval("currentCompound" + fullPath + " = {}");
+            fullPath += `["${child}"]`;
+        });
+        var command = "currentCompound" + fullPath + " = " + value + ";";
+        eval(command);
+    }
+    while(readIndex <= data.length) {
+        var typeID = readBytes(1).readInt8();
+        if(typeID = 0) {
+            currentCompound.pop();
+            continue;
+        }
+        var nameLength = readBytes(2).readUInt16BE(0);
+        var name = readBytes(nameLength).toString('utf-8');
+        console.log(nameLength);
+        console.log(typeID);
+        console.log(name);
+        //var typeLengths = { 0: 0, 1: 1, 2: 2, 3: 4, 4: 8, 5: 4, 6: 8 };
+        var types = {
+            0: () => {
+                currentCompound.pop();
+            },
+            1: () => {
+                var data = readBytes(1);
+                return setValue(name, data.readInt8(0));
+            },
+            1: () => {
+                var data = readBytes(2);
+                return setValue(name, data.readInt16BE(0));
+            },
+            3: () => {
+                var data = readBytes(4);
+                return setValue(name, data.readInt32BE(0));
+            },
+            4: () => {
+                var data = readBytes(8);
+                var low = data.readInt32BE(4);
+                var n = data.readInt32BE() * 4294967296.0 + low;
+                if (low < 0) n += 4294967296;
+                return setValue(name, n);
+            },
+            5: () => {
+                var data = readBytes(4);
+                return setValue(name, data.readFloatBE());
+            },
+            6: () => {
+                var data = readBytes(8);
+                return setValue(name, data.readDoubleBE());
+            },
+            8: () => {
+                var length = readBytes(2).readUInt16BE();
+                var string = readBytes(length).toString('utf-8');
+                return setValue(name, `"${string}"`);
+            },
+            9: () => {
+                console.log("test");
+                var listType = readBytes(1).readInt8();
+                var length = readBytes(4).readInt32BE();
+                var array = [];
+                returnValue = true;
+                for (var i = 0; i < length; i++) {
+                    array.push(types[listType]());
+                }
+                returnValue = false;
+                console.log(array);
+                setValue(name, array);
+            },
+            10: () => {
+                currentCompound.push(name);
+                console.log(name);
+            }
+        }
+        types[typeID]();
+        console.log(readIndex, data.length);
+        console.log(readIndex <= data.length);
+    }
+
+    return nbtStructure;
 }
 
 //TODO: Packet Compression

@@ -101,12 +101,12 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
 function HandleMojangProfileResponse(player, dataLength, response, data) {
     var useCache = false;
     if(response.statusCode !== 200) {
-        console.log("Unable to retrieve player profile!");
+        //console.log("Unable to retrieve player profile!");
         useCache = true;
     }
     data = JSON.parse(data);
     if(data["error"]) {
-        console.log("(TODO: Try again later) Error getting player profile: " + data["error"]);
+        //console.log("(TODO: Try again later) Error getting player profile: " + data["error"]);
         useCache = true;
     }
 
@@ -129,7 +129,7 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
         utils.writeString(plr.username, 16, playerInfo); /// Username
         utils.writeVarInt(plr.properties.length, playerInfo); // Number of properties
         plr.properties.forEach((property) => {
-            console.log(property);
+            //console.log(property);
             utils.writeString(property.name, 32767, playerInfo); // Property name
             utils.writeString(property.value, 32767, playerInfo); // Property value
             utils.writeByte(1, playerInfo); // Is Property Signed (True)
@@ -172,6 +172,7 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
     utils.writePacket(0x11, declareCommands, player, "play", "DeclareCommands");
     
 
+    
     player.server.onlinePlayers.forEach((plr) => {
         if(plr === player) return;
         var spawnPlayer = utils.createBufferObject();
@@ -182,7 +183,10 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
         utils.writeDouble(plr.location.z, spawnPlayer);
         utils.writeAngle(plr.location.yaw, spawnPlayer);
         utils.writeAngle(plr.location.pitch, spawnPlayer);
-        utils.writeByte(0xFF, spawnPlayer);
+        utils.writeByte(15, spawnPlayer); // Displayed Skin Parts
+        utils.writeVarInt(0, spawnPlayer);
+        utils.writeByte(plr.displayedSkinParts, spawnPlayer);
+        utils.writeByte(0xFF, spawnPlayer); // End metadata
         utils.writePacket(0x05, spawnPlayer, player, "play", "SpawnPlayer");
     });
 
@@ -194,8 +198,13 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
     utils.writeDouble(player.location.z, spawnPlayer);
     utils.writeAngle(player.location.yaw, spawnPlayer);
     utils.writeAngle(player.location.pitch, spawnPlayer);
-    utils.writeByte(0xFF, spawnPlayer);
+    utils.writeByte(15, spawnPlayer); // Displayed Skin Parts
+    utils.writeVarInt(0, spawnPlayer);
+    utils.writeByte(0b01111111, spawnPlayer);
+    utils.writeByte(0xFF, spawnPlayer); // End of metadata
     player.server.writePacketToAll(0x05, spawnPlayer, "play", "SpawnPlayer", [player]);
+
+    
 }
 
 const version = {
@@ -279,6 +288,37 @@ const version = {
                         name: "message",
                         type: "string",
                         max: 256
+                    }
+                ],
+                auto: true
+            },
+            0x05: {
+                name: "ClientSettings",
+                parameters: [
+                    {
+                        name: "locale",
+                        type: "string",
+                        max: 16
+                    },
+                    {
+                        name: "viewDistance",
+                        type: "byte"
+                    },
+                    {
+                        name: "chatMode",
+                        type: "varint"
+                    },
+                    {
+                        name: "chatColors",
+                        type: "boolean"
+                    },
+                    {
+                        name: "displayedSkinParts",
+                        type: "byte"
+                    },
+                    {
+                        name: "mainHand",
+                        type: "varint"
                     }
                 ]
             },
@@ -386,11 +426,40 @@ const version = {
                         name: "hand",
                         type: "varint",
                         values: {
-                            "main": 0,
-                            "offhand": 1
+                            0: "main",
+                            1: "offhand"
                         }
                     }
                 ]
+            },
+            0x1B: {
+                name: "EntityAction",
+                parameters: [
+                    {
+                        name: "entityId",
+                        type: "varint"
+                    },
+                    {
+                        name: "actionId",
+                        type: "varint",
+                        values: {
+                            0: "startSneaking",
+                            1: "stopSneaking",
+                            2: "leaveBed",
+                            3: "startSprinting",
+                            4: "stopSprinting",
+                            5: "startHorseJump",
+                            6: "stopHorseJump",
+                            7: "openHorseInventory",
+                            8: "startFlyingWithElytra"
+                        }
+                    },
+                    {
+                        name: "jumpBoost",
+                        type: "varint"
+                    }
+                ],
+                auto: true
             },
 
             // TODO
@@ -398,7 +467,6 @@ const version = {
             0x01: placeholder("QueryBlockNBT"),
             0x02: placeholder("SetDifficulty"),
             0x04: placeholder("ClientStatus"),
-            0x05: placeholder("ClientSettings"),
             0x06: placeholder("TabComplete"),
             0x07: placeholder("ConfirmTransaction"),
             0x08: placeholder("EnchantItem"),
@@ -416,7 +484,6 @@ const version = {
             0x17: placeholder("PickItem"),
             0x18: placeholder("CraftRecipeRequest"),
             0x19: placeholder("PlayerAbilities"),
-            0x1B: placeholder("EntityAction"),
             0x1C: placeholder("SteerVehicle"),
             0x1D: placeholder("RecipeBookData"),
             0x1E: placeholder("NameItem"),
@@ -536,6 +603,10 @@ const version = {
                 player.tcpSocket.removeListener('readable', player.onStreamReadable);
                 player.tcpSocket.pipe(player.decipher);
                 player.decipher.on('readable', player.onDecipherReadable.bind(player));
+                var setCompression = utils.createBufferObject();
+                utils.writeVarInt(500, setCompression);
+                utils.writePacket(0x03, setCompression, player, "logn", "SetCompression");
+                player.usePacketCompression = true;
                 https.get("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=" + player.username + "&serverId=" + serverHash, (res) => {
                     let data = '';
                     res.on('end', () => HandleMojangLoginResponse(player, dataLength, res, data));
@@ -548,8 +619,8 @@ const version = {
              * @param {Player} player
              * @param {number} dataLength
              */
-            ChatMessage: (player, dataLength) => {
-                var chatMessage = utils.readString(player, 256);
+            ChatMessage: (player, dataLength, chatMessage) => {
+                // var chatMessage = utils.readString(player, 256);
                 if(chatMessage.startsWith("/")) {
                     console.log("player command", chatMessage.substr(1));
                     player.server.commandHandler.runCommand(player, chatMessage.substr(1));
@@ -619,23 +690,38 @@ const version = {
              * @param {number} dataLength
              */
             PlayerPosition: (player, dataLength) => {
-                var oldLocation = player.location;
-                player.location.x = utils.readDouble(player);
-                player.location.y = utils.readDouble(player);
-                player.location.z = utils.readDouble(player);
-                var delta = player.location;
-                delta.subLocation(oldLocation);
-                console.log(delta.x, delta.y, delta.z);
+                var oldX = player.location.x;
+                var oldY = player.location.y;
+                var oldZ = player.location.z;
+                var newX = player.location.x = utils.readDouble(player);
+                var newY = player.location.y = utils.readDouble(player);
+                var newZ = player.location.z = utils.readDouble(player);
+                var deltaX = Math.round(((newX * 32) - (oldX * 32)) * 128);
+                var deltaY = Math.round(((newY * 32) - (oldY * 32)) * 128);
+                var deltaZ = Math.round(((newZ * 32) - (oldZ * 32)) * 128);
                 player.onGround = utils.readBoolean(player);
+                var entityRelativeMove = utils.createBufferObject();
+                utils.writeVarInt(player.entityID, entityRelativeMove);
+                utils.writeShort(deltaX, entityRelativeMove);
+                utils.writeShort(deltaY, entityRelativeMove);
+                utils.writeShort(deltaZ, entityRelativeMove);
+                utils.writeByte(player.onGround ? 1 : 0, entityRelativeMove);
+                player.server.writePacketToAll(0x28, entityRelativeMove, "play", "EntityRelativeMove", [player]);
             },
             /**
              * @param {Player} player
              * @param {number} dataLength
              */
             PlayerLook: (player, dataLength) => {
-                player.location.yaw = utils.readFloat(player);
-                player.location.pitch = utils.readFloat(player);
-                player.onGround = utils.readBoolean(player);
+                var yaw = player.location.yaw = utils.readFloat(player);
+                var pitch = player.location.pitch = utils.readFloat(player);
+                var onGround = player.onGround = utils.readBoolean(player);
+                var entityLook = utils.createBufferObject();
+                utils.writeVarInt(player.entityID, entityLook);
+                utils.writeAngle(yaw, entityLook);
+                utils.writeAngle(pitch, entityLook);
+                utils.writeByte(onGround ? 1 : 0, entityLook);
+                player.server.writePacketToAll(0x2A, entityLook, "play", "EntityLook", [player]);
             },
             /**
              * @param {Player} player
@@ -661,12 +747,69 @@ const version = {
                 utils.writeByte(hand == 0 ? 0 : 3, animation);
                 player.server.writePacketToAll(0x06, animation, "play", "Animation", [player]);
             },
+            /**
+             * @param {Player} player
+             * @param {number} dataLength
+             */
+            ClientSettings: (player, dataLength) => {
+                var locale = utils.readString(player, 16);
+                var viewDistance = utils.readBytes(player, 1);
+                var chatMode = utils.readVarInt(player);
+                var chatColors = utils.readBoolean(player);
+                player.displayedSkinParts = utils.readBytes(player, 1)[0];
+                var mainHand = utils.readVarInt(player);
+                var entityMetadata = utils.createBufferObject();
+                utils.writeVarInt(player.entityID, entityMetadata);
+                utils.writeByte(15, entityMetadata); // Displayed Skin Parts
+                utils.writeVarInt(0, entityMetadata);
+                utils.writeByte(player.displayedSkinParts, entityMetadata);
+                utils.writeByte(0xff, entityMetadata); // End of metadata
+                player.server.writePacketToAll(0x43, entityMetadata, "play", "EntityMetadata"/*, [player]*/);
+            },
+            /**
+             * @param {Player} player
+             * @param {number} dataLength
+             */
+            EntityAction: (player, dataLength, entityId, actionId, jumpBoost) => {
+                switch(actionId) {
+                    case "startSneaking":
+                        player.isSneaking = true;
+                        break;
+                    case "stopSneaking":
+                        player.isSneaking = false;
+                        break;
+                    case "leaveBed":
+                        break;
+                    case "startSprinting":
+                        player.isSprinting = true;
+                        break;
+                    case "stopSprinting":
+                        player.isSprinting = false;
+                        break;
+                    case "startHorseJump":
+                        break;
+                    case "stopHorseJump":
+                        break;
+                    case "openHorseInventory":
+                        break;
+                    case "startFlyingWithElytra":
+                        break;
+                }
+
+                var entityMetadata = utils.createBufferObject();
+                utils.writeVarInt(player.entityID, entityMetadata);
+                utils.writeByte(0, entityMetadata); // Status meta data
+                utils.writeVarInt(1, entityMetadata);
+                utils.writeVarInt(player.getStatusMetaDataBitMask(), entityMetadata);
+                utils.writeByte(0xff, entityMetadata); // End of metadata
+                player.server.writePacketToAll(0x43, entityMetadata, "play", "EntityMetadata", [player]);
+            },
+
 
             // TODO
             TeleportConfirm: () => { },
             QueryBlockNBT: () => { },
             ClientStatus: () => { },
-            ClientSettings: () => { },
             TabComplete: () => { },
             ConfirmTransaction: () => { },
             EnchantItem: () => { },
@@ -683,7 +826,6 @@ const version = {
             PickItem: () => { },
             CraftRecipeRequest: () => { },
             PlayerAbilities: () => { },
-            EntityAction: () => { },
             SteerVehicle: () => { },
             RecipeBookData: () => { },
             NameItem: () => { },

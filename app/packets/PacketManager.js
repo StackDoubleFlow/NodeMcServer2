@@ -1,4 +1,5 @@
 import Player from "../Player";
+import versions from "./versions/versions";
 
 var utils = require('./../utils');
 
@@ -11,24 +12,25 @@ class PacketManager {
     /**
      * Initializes the packet manager
      * 
+     * @param {(string|number)} [version=1.14] Version name or protocol version number. (eg `"1.14"` or `477`)
      */
-    constructor(version="1.14") {
-        const versionInfo = require(`./versions/${version}.js`);
-
+    constructor(version) {
+        if (!version) version = "1.14";
         /**
          * Version number
          * 
          * @type {number}
          */
-        this.version = versionInfo.version;
+        this.version = versions.getVersonNumber(version);
 
         /**
          * Version name
          * 
          * @type {string}
          */
-        this.versionName = versionInfo.name;
+        this.versionName = versions[this.version];
 
+        const versionInfo = require(`./versions/${version}.js`);
         /**
          * Packet types
          * 
@@ -82,7 +84,15 @@ class PacketManager {
 
         if (packet.log) 
             console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ C->S ~~", state, "~", packet.name, packet.todo ? "~ TODO" : "");
-        callback(player, length);
+
+
+        let args = [];
+        if(packet.auto) {
+            args = utils.readParameters(packet.parameters, player);
+        }  
+
+        callback(player, length, ...args);
+
         var totalBytesRead = player.internalIndex - oldInternalIndex;
         if(totalBytesRead !== length) {
             console.log(length, totalBytesRead);
