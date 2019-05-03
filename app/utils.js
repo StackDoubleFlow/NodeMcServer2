@@ -794,11 +794,16 @@ export function minecraftHexDigest(hash) { //TODO: Clean-up
 export function readNBT(data) {
     var nbtStructure = {};
     var readIndex = 0;
-    var returnValue = false;
     /**
      * @type {Array<string>}
      */
     var currentCompound = [];
+    var nbtBackup = [];
+    var inArray = false;
+    var arrayIndex = 0;
+    var currentArrayType = 0;
+    var currentArrayLength = 0;
+    var currentArrayName = "";
 
     /**
      * @param {number} bytes 
@@ -815,28 +820,67 @@ export function readNBT(data) {
      * @param {any} value 
      */
     function setValue(name, value) {
-        if(returnValue) return value;
         //console.log(currentCompound.join(".") + "." + name);
         var fullPath = "";
         currentCompound.forEach(child => {
-            if(eval("currentCompound" + fullPath) == undefined) eval("currentCompound" + fullPath + " = {}");
             fullPath += `["${child}"]`;
+            if(eval("nbtStructure" + fullPath) == undefined) eval("nbtStructure" + fullPath + " = {};");
         });
-        var command = "currentCompound" + fullPath + " = " + value + ";";
+        fullPath += `["${name}"]`;
+        if(typeof value == "object") {
+            value = JSON.stringify(value);
+        }
+        var command = "nbtStructure" + fullPath + " = " + value + ";";
         eval(command);
     }
-    while(readIndex <= data.length) {
-        var typeID = readBytes(1).readInt8();
-        if(typeID = 0) {
-            currentCompound.pop();
-            continue;
+
+    function endArray() {
+        var name = currentArrayName;
+        currentArrayName = nbtBackup.pop();
+        var length = currentArrayLength;
+        arrayIndex = nbtBackup.pop();
+        currentCompound = nbtBackup.pop();
+        currentArrayLength = nbtBackup.pop();
+        currentArrayType = nbtBackup.pop();
+        inArray = nbtBackup.pop();
+        var generatedStructure = nbtStructure;
+        nbtStructure = nbtBackup.pop();
+        var array = [];
+        for(var i = 0; i < length; i++) {
+            array.push(generatedStructure[i]);
         }
-        var nameLength = readBytes(2).readUInt16BE(0);
-        var name = readBytes(nameLength).toString('utf-8');
-        console.log(nameLength);
-        console.log(typeID);
-        console.log(name);
-        //var typeLengths = { 0: 0, 1: 1, 2: 2, 3: 4, 4: 8, 5: 4, 6: 8 };
+        setValue(name, array);
+    }
+
+    function readNext() {
+        if(inArray && currentArrayLength == arrayIndex) endArray();
+        var typeID;
+        var nameLength;
+        var name;
+        if(inArray) {
+            typeID = currentArrayType;
+            currentCompound.unshift(arrayIndex);
+            name = currentCompound.pop();
+            if(currentCompound.length == 0) arrayIndex++;
+            if(typeID == 10 && currentCompound.length > 0) {
+                typeID = readBytes(1).readInt8();
+                if(typeID == 0) {
+                    currentCompound.pop();
+                    return;
+                };
+                nameLength = readBytes(2).readUInt16BE(0);
+                name = readBytes(nameLength).toString('utf-8');
+            }
+        } else {
+            typeID = readBytes(1).readInt8();
+            if(typeID == 0) {
+                currentCompound.pop();
+                return;
+            };
+            nameLength = readBytes(2).readUInt16BE(0);
+            name = readBytes(nameLength).toString('utf-8');
+        }
+        
         var types = {
             0: () => {
                 currentCompound.pop();
@@ -845,7 +889,7 @@ export function readNBT(data) {
                 var data = readBytes(1);
                 return setValue(name, data.readInt8(0));
             },
-            1: () => {
+            2: () => {
                 var data = readBytes(2);
                 return setValue(name, data.readInt16BE(0));
             },
@@ -874,26 +918,31 @@ export function readNBT(data) {
                 return setValue(name, `"${string}"`);
             },
             9: () => {
-                console.log("test");
                 var listType = readBytes(1).readInt8();
                 var length = readBytes(4).readInt32BE();
-                var array = [];
-                returnValue = true;
-                for (var i = 0; i < length; i++) {
-                    array.push(types[listType]());
-                }
-                returnValue = false;
-                console.log(array);
-                setValue(name, array);
+                nbtBackup.push(nbtStructure);
+                nbtStructure = {};
+                nbtBackup.push(inArray);
+                nbtBackup.push(currentArrayType);
+                nbtBackup.push(currentArrayLength);
+                nbtBackup.push(currentCompound);
+                nbtBackup.push(arrayIndex);
+                nbtBackup.push(currentArrayName);
+                inArray = true;
+                arrayIndex = listType == 10 ? -1 : 0;
+                currentArrayType = listType;
+                currentArrayLength = length;
+                currentArrayName = name;
+                currentCompound = [];
             },
             10: () => {
-                currentCompound.push(name);
-                console.log(name);
+                if(name !== "") currentCompound.push(name);
             }
         }
         types[typeID]();
-        console.log(readIndex, data.length);
-        console.log(readIndex <= data.length);
+    }
+    while(readIndex < data.length) {
+        readNext();
     }
 
     return nbtStructure;

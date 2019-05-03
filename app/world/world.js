@@ -132,7 +132,7 @@ class World {
     loadWorld() {
         var levelData = fs.readFileSync(this.path + "/level.dat");
         levelData = zlib.gunzipSync(levelData);
-        //console.log(utils.readNBT(levelData));
+        levelData = utils.readNBT(levelData);
     }
 
 }
