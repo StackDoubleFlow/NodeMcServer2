@@ -509,10 +509,10 @@ const version = {
              * @param {number} dataLength
              */
             Handshake: (player, dataLength) => {
-                var version = utils.readVarInt(player);
-                var serverAddress = utils.readString(player, 255);
-                var port = utils.readUShort(player);
-                var nextState = utils.readVarInt(player);
+                const version = utils.readVarInt(player);
+                const serverAddress = utils.readString(player, 255);
+                const port = utils.readUShort(player);
+                const nextState = utils.readVarInt(player);
                 if (nextState == 1) {
                     player.state = "stat";
                 } else if (nextState == 2) {
@@ -528,8 +528,8 @@ const version = {
              * @param {number} dataLength
              */
             Request: (player, dataLength) => {
-                var response = utils.createBufferObject();
-                var responseData = {
+                const response = utils.createBufferObject();
+                const responseData = {
                     "version": {
                         "name": "NodeMC 1.14",
                         "protocol": 477
@@ -558,8 +558,8 @@ const version = {
              * @param {number} dataLength
              */
             Ping: (player, dataLength) => {
-                var payload = utils.readLong(player);
-                var pong = utils.createBufferObject();
+                const payload = utils.readLong(player);
+                const pong = utils.createBufferObject();
                 utils.writeLong(payload, pong);
                 utils.writePacket(0x01, pong, player, "stat", "Pong");
             }
@@ -570,9 +570,9 @@ const version = {
              * @param {number} dataLength
              */
             LoginStart: (player, dataLength) => {
-                var username = utils.readString(player, 16);
+                const username = utils.readString(player, 16);
                 player.username = username;
-                var encryptionRequest = utils.createBufferObject();
+                const encryptionRequest = utils.createBufferObject();
                 utils.writeString("", 20, encryptionRequest);
                 utils.writeByteArray(player.server.publicKeyDER, encryptionRequest, true);
                 utils.writeByteArray(player.verifyToken, encryptionRequest, true);
@@ -583,14 +583,14 @@ const version = {
              * @param {number} dataLength
              */
             EncyptionResponse: (player, dataLength) => {
-                var sharedSecret = Buffer.from(utils.readByteArray(player));
+                const sharedSecret = Buffer.from(utils.readByteArray(player));
                 player.sharedSecret = crypto.privateDecrypt({ 
                     key: player.server.privateKeyPEM, 
                     padding: player.server.encryptionPadding, 
                     passphrase: player.server.encryptionPassphrase 
                 }, sharedSecret);
-                var verifyToken = Buffer.from(utils.readByteArray(player));
-                var decryptedVerifyToken = crypto.privateDecrypt({ 
+                const verifyToken = Buffer.from(utils.readByteArray(player));
+                const decryptedVerifyToken = crypto.privateDecrypt({ 
                     key: player.server.privateKeyPEM, 
                     padding: player.server.encryptionPadding,
                     passphrase: player.server.encryptionPassphrase
@@ -599,19 +599,19 @@ const version = {
                     console.log("Client sent back an incorrent verification token, things will probably go badly from here");
                 }
                 player.useEncryption = true;
-                var cryptoServerHash = crypto.createHash('sha1');
+                const cryptoServerHash = crypto.createHash('sha1');
                 cryptoServerHash.update("");
                 cryptoServerHash.update(player.sharedSecret);
                 cryptoServerHash.update(player.server.publicKeyDER);                                   // DONT FUCKING TOUCH THIS CODE 
-                var digest = cryptoServerHash.digest();
-                var serverHash = utils.minecraftHexDigest(digest);
+                const digest = cryptoServerHash.digest();
+                const serverHash = utils.minecraftHexDigest(digest);
                 player.cipher = crypto.createCipheriv("aes-128-cfb8", player.sharedSecret, player.sharedSecret);
                 player.cipher.pipe(player.tcpSocket);
                 player.decipher = crypto.createDecipheriv("aes-128-cfb8", player.sharedSecret, player.sharedSecret);
                 player.tcpSocket.removeListener('readable', player.onStreamReadable);
                 player.tcpSocket.pipe(player.decipher);
                 player.decipher.on('readable', player.onDecipherReadable.bind(player));
-                var setCompression = utils.createBufferObject();
+                const setCompression = utils.createBufferObject();
                 utils.writeVarInt(500, setCompression);
                 utils.writePacket(0x03, setCompression, player, "logn", "SetCompression");
                 player.usePacketCompression = true;
@@ -657,10 +657,10 @@ const version = {
              * @param {number} dataLength
              */
             KeepAlive: (player, dataLength) => {
-                var keepAliveID = utils.readLong(player);
-                var timeSinceLastKeepAlive = new Date().getTime() - player.server.timeOfLastKeepAlive;
+                const keepAliveID = utils.readLong(player);
+                const timeSinceLastKeepAlive = new Date().getTime() - player.server.timeOfLastKeepAlive;
                 player.ping = timeSinceLastKeepAlive;
-                var playerInfo = utils.createBufferObject();
+                const playerInfo = utils.createBufferObject();
                 utils.writeVarInt(2, playerInfo); // Action (Update Latency)
                 utils.writeVarInt(1, playerInfo); // Number of players
                 utils.writeUUID(player, playerInfo) // UUID
@@ -698,17 +698,17 @@ const version = {
              * @param {number} dataLength
              */
             PlayerPosition: (player, dataLength) => {
-                var oldX = player.location.x;
-                var oldY = player.location.y;
-                var oldZ = player.location.z;
-                var newX = player.location.x = utils.readDouble(player);
-                var newY = player.location.y = utils.readDouble(player);
-                var newZ = player.location.z = utils.readDouble(player);
-                var deltaX = Math.round(((newX * 32) - (oldX * 32)) * 128);
-                var deltaY = Math.round(((newY * 32) - (oldY * 32)) * 128);
-                var deltaZ = Math.round(((newZ * 32) - (oldZ * 32)) * 128);
+                const oldX = player.location.x;
+                const oldY = player.location.y;
+                const oldZ = player.location.z;
+                const newX = player.location.x = utils.readDouble(player);
+                const newY = player.location.y = utils.readDouble(player);
+                const newZ = player.location.z = utils.readDouble(player);
+                const deltaX = Math.round(((newX * 32) - (oldX * 32)) * 128);
+                const deltaY = Math.round(((newY * 32) - (oldY * 32)) * 128);
+                const deltaZ = Math.round(((newZ * 32) - (oldZ * 32)) * 128);
                 player.onGround = utils.readBoolean(player);
-                var entityRelativeMove = utils.createBufferObject();
+                const entityRelativeMove = utils.createBufferObject();
                 utils.writeVarInt(player.entityID, entityRelativeMove);
                 utils.writeShort(deltaX, entityRelativeMove);
                 utils.writeShort(deltaY, entityRelativeMove);
@@ -721,10 +721,10 @@ const version = {
              * @param {number} dataLength
              */
             PlayerLook: (player, dataLength) => {
-                var yaw = player.location.yaw = utils.readFloat(player);
-                var pitch = player.location.pitch = utils.readFloat(player);
-                var onGround = player.onGround = utils.readBoolean(player);
-                var entityLook = utils.createBufferObject();
+                const yaw = player.location.yaw = utils.readFloat(player);
+                const pitch = player.location.pitch = utils.readFloat(player);
+                const onGround = player.onGround = utils.readBoolean(player);
+                const entityLook = utils.createBufferObject();
                 utils.writeVarInt(player.entityID, entityLook);
                 utils.writeAngle(yaw, entityLook);
                 utils.writeAngle(pitch, entityLook);
@@ -736,13 +736,13 @@ const version = {
              * @param {number} dataLength
              */
             PlayerBlockPlacement: (player, dataLength) => {
-                var hand = utils.readVarInt(player);
-                var location = utils.readPosition(player);
-                var face = utils.readVarInt(player);
-                var cursorX = utils.readFloat(player);
-                var cursorY = utils.readFloat(player);
-                var cursorZ = utils.readFloat(player);
-                var insideBlock = utils.readBoolean(player);
+                const hand = utils.readVarInt(player);
+                const location = utils.readPosition(player);
+                const face = utils.readVarInt(player);
+                const cursorX = utils.readFloat(player);
+                const cursorY = utils.readFloat(player);
+                const cursorZ = utils.readFloat(player);
+                const insideBlock = utils.readBoolean(player);
             },
             /**
              * @param {Player} player
@@ -750,7 +750,7 @@ const version = {
              */
             Animation: (player, dataLength) => {
                 const hand = utils.readVarInt(player);
-                var animation = utils.createBufferObject();
+                const animation = utils.createBufferObject();
                 utils.writeVarInt(player.entityID, animation);
                 utils.writeByte(hand == 0 ? 0 : 3, animation);
                 player.server.writePacketToAll(0x06, animation, "play", "Animation", [player]);
@@ -760,13 +760,13 @@ const version = {
              * @param {number} dataLength
              */
             ClientSettings: (player, dataLength) => {
-                var locale = utils.readString(player, 16);
-                var viewDistance = utils.readBytes(player, 1);
-                var chatMode = utils.readVarInt(player);
-                var chatColors = utils.readBoolean(player);
+                const locale = utils.readString(player, 16);
+                const viewDistance = utils.readBytes(player, 1);
+                const chatMode = utils.readVarInt(player);
+                const chatColors = utils.readBoolean(player);
                 player.displayedSkinParts = utils.readBytes(player, 1)[0];
-                var mainHand = utils.readVarInt(player);
-                var entityMetadata = utils.createBufferObject();
+                const mainHand = utils.readVarInt(player);
+                const entityMetadata = utils.createBufferObject();
                 utils.writeVarInt(player.entityID, entityMetadata);
                 utils.writeByte(15, entityMetadata); // Displayed Skin Parts
                 utils.writeVarInt(0, entityMetadata);
@@ -804,7 +804,7 @@ const version = {
                         break;
                 }
 
-                var entityMetadata = utils.createBufferObject();
+                const entityMetadata = utils.createBufferObject();
                 utils.writeVarInt(player.entityID, entityMetadata);
                 utils.writeByte(0, entityMetadata); // Status meta data
                 utils.writeVarInt(1, entityMetadata);
