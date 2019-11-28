@@ -17,8 +17,8 @@ class World {
      */
     constructor(path) {
         this.path = "./" + path;
-        var fileExists = fs.existsSync(path);
-        var isDirectory = fs.lstatSync(path).isDirectory();
+        const fileExists = fs.existsSync(path);
+        const isDirectory = fs.lstatSync(path).isDirectory();
         if(isDirectory) {
             this.loadWorld();
         } else {
@@ -31,7 +31,7 @@ class World {
     }
 
     getChunkPacket(x, z, fullChunk) {
-        var fullPacket = utils.createBufferObject();
+        const fullPacket = utils.createBufferObject();
         utils.writeInt(x, fullPacket);
         utils.writeInt(z, fullPacket);
         utils.writeByte(1, fullPacket);
@@ -47,7 +47,7 @@ class World {
     }
 
     getChunkData(x, z, fullPacket) {
-        var data = utils.createBufferObject();
+        const data = utils.createBufferObject();
         // Chunk sections
         utils.writeVarInt(1, data);
         utils.appendData(data, this.getChunkSection(x, 0, z));
@@ -67,7 +67,7 @@ class World {
         //utils.appendData(data, this.getChunkSection(x, 14, z));
         //utils.appendData(data, this.getChunkSection(x, 15, z));
         // Biomes
-        for(var i = 0; i < 256; i++) {
+        for(let i = 0; i < 256; i++) {
             utils.writeInt(0, data);
         }
         // Write length in bytes
@@ -77,29 +77,29 @@ class World {
     }
 
     getChunkSection(x, y, z, palette) {
-        var chunkSection = utils.createBufferObject();
+        const chunkSection = utils.createBufferObject();
         // Block Count
         utils.writeUShort(16*16*16, chunkSection);
         // This cannot be any more than 32
-        var bitsPerBlock = 4;
+        const bitsPerBlock = 4;
         utils.writeByte(bitsPerBlock, chunkSection);
         // Palette
         utils.writeVarInt(1, chunkSection);
         utils.writeVarInt(1, chunkSection);
         // Data Array
-        var longs = [];
-        var longLow = 0;
-        var longHigh = 0;
-        for(var yCurrent = 0; yCurrent < 16; yCurrent++) {
-            for(var zCurrent = 0; zCurrent < 16; zCurrent++) {
-                for(var xCurrent = 0; xCurrent < 16; xCurrent++) {
+        const longs = [];
+        let longLow = 0;
+        let longHigh = 0;
+        for(let yCurrent = 0; yCurrent < 16; yCurrent++) {
+            for(let zCurrent = 0; zCurrent < 16; zCurrent++) {
+                for(let xCurrent = 0; xCurrent < 16; xCurrent++) {
                     // Testing block state
-                    var blockStateID = 0;
-                    var blockIndex = (((yCurrent * 16) + zCurrent) * 16) + xCurrent;
-                    var longOffset = (blockIndex * bitsPerBlock) % 64;
+                    const blockStateID = 0;
+                    const blockIndex = (((yCurrent * 16) + zCurrent) * 16) + xCurrent;
+                    const longOffset = (blockIndex * bitsPerBlock) % 64;
                     if(longOffset < 64 && longOffset + bitsPerBlock - 1 >= 64) {
                         longHigh |= (blockStateID << longOffset) & 0xFFFFFF;
-                        var temp = Buffer.alloc(8);
+                        const temp = Buffer.alloc(8);
                         temp.writeInt32BE(longHigh);
                         temp.writeInt32BE(longLow, 4);
                         longs.push(temp);
@@ -114,7 +114,7 @@ class World {
                         longHigh |= blockStateID << longOffset;
                     }
                     if(64 - longOffset == bitsPerBlock) {
-                        var temp = Buffer.alloc(8);
+                        const temp = Buffer.alloc(8);
                         temp.writeInt32BE(longHigh);
                         temp.writeInt32BE(longLow, 4);
                         longs.push(temp);
