@@ -130,9 +130,9 @@ class World {
 
 
     loadWorld() {
-        var levelData = fs.readFileSync(this.path + "/level.dat");
-        levelData = zlib.gunzipSync(levelData);
-        levelData = utils.readNBT(levelData);
+        const levelFile = fs.readFileSync(this.path + "/level.dat");
+        const levelRaw = zlib.gunzipSync(levelFile);
+        const levelNbt = utils.readNBT(levelRaw);
     }
 
 }
