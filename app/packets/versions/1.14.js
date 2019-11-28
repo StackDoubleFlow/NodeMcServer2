@@ -584,9 +584,17 @@ const version = {
              */
             EncyptionResponse: (player, dataLength) => {
                 var sharedSecret = Buffer.from(utils.readByteArray(player));
-                player.sharedSecret = crypto.privateDecrypt({ key: player.server.privateKeyPEM, padding: player.server.encryptionPadding }, sharedSecret);
+                player.sharedSecret = crypto.privateDecrypt({ 
+                    key: player.server.privateKeyPEM, 
+                    padding: player.server.encryptionPadding, 
+                    passphrase: player.server.encryptionPassphrase 
+                }, sharedSecret);
                 var verifyToken = Buffer.from(utils.readByteArray(player));
-                var decryptedVerifyToken = crypto.privateDecrypt({ key: player.server.privateKeyPEM, padding: player.server.encryptionPadding }, verifyToken);
+                var decryptedVerifyToken = crypto.privateDecrypt({ 
+                    key: player.server.privateKeyPEM, 
+                    padding: player.server.encryptionPadding,
+                    passphrase: player.server.encryptionPassphrase
+                }, verifyToken);
                 if (Buffer.compare(decryptedVerifyToken, player.verifyToken) != 0) {
                     console.log("Client sent back an incorrent verification token, things will probably go badly from here");
                 }
