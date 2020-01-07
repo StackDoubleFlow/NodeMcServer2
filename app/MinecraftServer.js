@@ -17,19 +17,19 @@ class MinecraftServer {
      * 
      */
     constructor() {
-        console.log("Starting server...");
+        this.sendMessage("Starting server...");
         this.tcpServer = net.createServer(this.onClientConnected.bind(this));
         /**
          * @type {Array<Player>}
          */
         this.onlinePlayers = [];
 
-        console.log("Loading config");
+        this.sendMessage("Loading config");
 
         this.config = JSON.parse(fs.readFileSync(__dirname + "/../config.json").toString('utf-8'));
         if(!this.config) console.error("Unable to find config file");
 
-        console.log("Loading icon(s)");
+        this.sendMessage("Loading icon(s)");
         
         this.icons = [];
         try {
@@ -48,7 +48,7 @@ class MinecraftServer {
         
         if(this.icons.length === 0) console.error("Unable to find valid icon file");
 
-        console.log("Generating encryption KeyPair");
+        this.sendMessage("Generating encryption KeyPair");
 
         this.encryptionPassphrase = '';
         var { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
@@ -70,7 +70,7 @@ class MinecraftServer {
         this.privateKeyPEM = privateKey;
         this.encryptionPadding = crypto.constants.RSA_PKCS1_PADDING;
 
-        console.log("Loading world");
+        this.sendMessage("Loading world");
 
         this.world = new World("test_world");
 
@@ -344,9 +344,9 @@ class MinecraftServer {
      * @param {number} port 
      */
     listen(port) {
-        console.log("Binding port");
+        this.sendMessage("Binding port");
         this.tcpServer.listen(port);
-        console.log("Server listening on port " + port);
+        this.sendMessage("Server listening on port " + port);
     }
 
     /**

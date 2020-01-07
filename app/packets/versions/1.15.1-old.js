@@ -693,7 +693,7 @@ version.callbacks = {
                         "color": "dark_gray"
                     },
                     {
-                        "text": chatMessage.replace(/[^a-zA-Z0-9~`!@#$%^&*()_=+* \[\];':",.<>?/\\-]/g, '*')
+                        "text": chatMessage // .replace(/[^a-zA-Z0-9~`!@#$%^&*()_=+* \[\];':",.<>?/\\-]/g, '*')
                     }
                 ]
             };

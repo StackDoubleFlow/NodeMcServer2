@@ -2,11 +2,11 @@
 'use strict'
 
 import { inflate } from 'zlib';
+import MinecraftServer from "./MinecraftServer";
 
 var net = require('net');
 var utils = require('./utils');
 var PacketManager = require('./packets/PacketManager');
-var MinecraftServer = require('./MinecraftServer');
 var crypto = require('crypto');
 const Location = require('./world/Location');
 

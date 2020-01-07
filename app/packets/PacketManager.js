@@ -30,7 +30,7 @@ class PacketManager {
          */
         this.versionName = versions[this.version];
 
-        const versionInfo = require(`./versions/${version}.js`);
+        const versionInfo = require(`./versions/${version}`);
         /**
          * Packet types
          * 
@@ -54,7 +54,7 @@ class PacketManager {
      * @return {PacketCallback} callback
      */
     getPacketCallback(state, packetId) {
-        return this.callbacks[this.inboundPackets[state][packetId]];
+        return this.callbacks[this.inboundPackets[state][packetId]].bind(this);
     }
 
     /**

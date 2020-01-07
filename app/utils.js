@@ -17,7 +17,31 @@ export const types = {
         ushort: readUShort,
         varint: readVarInt,
         varlong: readVarLong,
-        null: () => {}
+        nbt: readNBT,
+        null: () => {},
+        [null]: () => {}
+    },
+    write: {
+        byte: writeByte,
+        boolean: writeByte,
+        double: writeDouble,
+        float: writeFloat,
+        long: writeLong,
+        position: writePosition,
+        string: writeString,
+        ushort: writeUShort,
+        varint: writeVarInt,
+        varlong: writeVarLong,
+        angle: writeAngle,
+        heightmap: writeHeightmap,
+        int: writeInt,
+        json: writeJson,
+        nbitlong: writeNBitLong,
+        nbt: writeNbt,
+        short: writeShort,
+        uuid: writeUUID,
+        null: () => {},
+        [null]: () => {}
     }
 }
 
@@ -101,6 +125,10 @@ export function readType(type, player, ...args) {
     return types.read[type](player, ...args);
 }
 
+export function writeType(type, player, ...args) {
+    return types.write[type](player, ...args);
+}
+
 /**
  * @param {string} param
  * @param {Player} player
@@ -154,7 +182,56 @@ export function readParameters(params, player) {
     for(let arg of params) {
         args.push(readParameter(arg, player));
     }
-    return args
+    return args;
+}
+
+/**
+ * @param {string} param
+ * @param {Player} player
+ * Player to read from
+ * @return {Array} arguments
+ */
+export function writeParameter(def, player, value) {
+    /**
+     * @type {string}
+     */
+    let type = def.type;
+    let isArray = def.array;
+
+    if (isArray) {
+        writeType(def.lengthType, player, value.length);
+    
+        for(let i = 0; i < value.length; i++) {
+            if(def.parameters) {
+                for(let a of def.parameters)
+                    writeParameter(a, player, value[i]);
+            } else { 
+                writeType(type, player, value[i], def.max);
+            } 
+        } 
+
+        return value;
+    } else {
+        if(def.parameters) {
+            for(let a of def.parameters)
+                writeParameter(a, player, value);
+        } else { 
+            writeType(type, player, value, def.max);
+        } 
+    }
+}
+
+/**
+ * Player to write to
+ * 
+ * @param {object<string, *>} params
+ * @param {Player} player
+ */
+export function writeParameters(params, player, ...values) {
+    assert(params.length === values.length, "Missing or too much data");
+
+    for (let i = 0; i < params.length; i++)
+        writeParameter(params[u], player, values[i]);
 }
 
 /**
@@ -427,7 +504,7 @@ export function writeString(string, n, bufferObject) {
     if(string.length > n || out.length > n*4) {
         console.error("Error writing string to network stream: ", string.length, n);
     }
-    writeVarInt(string.length, bufferObject);
+    writeVarInt(out.length, bufferObject);
     appendData(bufferObject, out);
 }
 
@@ -738,7 +815,7 @@ export function writePacket(packetID, data, player, state, name) {
 /**
  * Creates a buffer object to create packets
  * 
- * @return {Object}
+ * @return {{b: Buffer}}
  * The buffer object
  */
 export function createBufferObject() {
