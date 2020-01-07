@@ -209,7 +209,8 @@ export default class Player {
         const special = {
             "Notch": "gold",
             "StackDoubleFlow": "green",
-            "AL_1": "aqua"
+            "AL_1": "aqua",
+            "Jathemez": "red"
         };
         return {
             "text": this.username,
