@@ -1,6 +1,6 @@
 {
     "motd": "Test motd",
-    "port": 25566,
+    "port": 25570,
     "icon_file": "icons",
     "max_players": 100,
     "world_file": "world.nodemc",

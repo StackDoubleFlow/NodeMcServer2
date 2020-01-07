@@ -87,7 +87,7 @@ class World {
         utils.writeByte(bitsPerBlock, chunkSection);
         // Palette
         utils.writeVarInt(1, chunkSection);
-        utils.writeVarInt(1, chunkSection);
+        utils.writeVarInt(2, chunkSection);
         // Data Array
         const longs = [];
         let longLow = 0;
@@ -96,7 +96,7 @@ class World {
             for(let zCurrent = 0; zCurrent < 16; zCurrent++) {
                 for(let xCurrent = 0; xCurrent < 16; xCurrent++) {
                     // Testing block state
-                    const blockStateID = 0;
+                    const blockStateID = 1;
                     const blockIndex = (((yCurrent * 16) + zCurrent) * 16) + xCurrent;
                     const longOffset = (blockIndex * bitsPerBlock) % 64;
                     if(longOffset < 64 && longOffset + bitsPerBlock - 1 >= 64) {

@@ -389,14 +389,7 @@ export function writeByteArray(bytes, bufferObject, writeLength) {
  * The object containing the buffer to write to
  */
 export function writeAngle(degrees, bufferObject) {
-    if(degrees > 360 || degrees < -360) {
-        var negative = degrees < 0 ? true : false;
-        degrees = Math.abs(degrees);
-        var multiplier = Math.floor(degrees / 360);
-        degrees -= 360 * multiplier;
-        if(negative) degrees = -degrees;
-    }
-    var angle = Math.floor((degrees / 360) * 256);
+    var angle = Math.floor(((degrees % 360) / 360) * 256);
     writeByte(angle, bufferObject);
 }
 
@@ -734,7 +727,8 @@ export function writePacket(packetID, data, player, state, name) {
             player.tcpSocket.write(bufferObject.b);
         }
         const clientName = player.username || player.tcpSocket.remoteAddress.substr(7);
-        if (!(['ChunkData', 'ChatMessage', 'KeepAlive', 'Animation', "EntityLook", "EntityRelativeMove", "PlayerInfo"].includes(name)))
+        if (!(['ChunkData', 'ChatMessage', 'KeepAlive', 'Animation', "EntityLook", "EntityRelativeMove", "PlayerInfo", 
+                "EntityLookAndRelativeMove", "EntityHeadLook"].includes(name)))
             console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ S->C ~~ " + state + " ~ " + name + (player.usePacketCompression && data.b.length >= 500 ? " ~~ Compressed: Saved " + (data.b.length - bufferObject.b.length) + " bytes" : " ~~ Not Compressed"));
     } catch(e) {
         console.error(e.stack);

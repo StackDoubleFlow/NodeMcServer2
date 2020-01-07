@@ -222,710 +222,718 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
 const version = {
     name: "1.15.1",
     version: 575,
-    types: {
-    },
-    outboundPackets: {
-        none: {},
-        stat: {},
-        login: {},
-        play: {}
-    },
-    inboundPackets: {
-        none: {
-            0x00: {
-                name: "Handshake",
-                parameters: [
-                    {
-                        name: "version",
-                        type: "varint"
-                    },
-                    {
-                        name: "port",
-                        type: "ushort"
-                    },
-                    {
-                        name: "NextState",
-                        type: "varint"
-                    }
-                ],
-            }
-        },
-        stat: {
-            0x00: {
-                name: "Request",
-                parameters: []
-            },
-            0x01: {
-                name: "Ping",
-                parameters: [
-                    {
-                        name: "pingId",
-                        type: "long"
-                    }
-                ]
-            }
-        },
-        logn: {
-            0x00: {
-                name: "LoginStart",
-                parameters: [
-                    {
-                        name: "username",
-                        type: "string",
-                        max: 16
-                    }
-                ]
-            },
-            0x01: {
-                name: "EncyptionResponse",
-                parameters: [
-                    {
-                        name: "sharedSecret",
-                        lengthType: "varint",
-                        type: "byte[]"
-                    },
-                    {
-                        name: "verifyToken",
-                        lengthType: "varint",
-                        type: "byte[]"
-                    }
-                ]
-            }
-        },
-        play: {
-            0x03: {
-                name: "ChatMessage",
-                parameters: [
-                    {
-                        name: "message",
-                        type: "string",
-                        max: 256
-                    }
-                ],
-                auto: true
-            },
-            0x05: {
-                name: "ClientSettings",
-                parameters: [
-                    {
-                        name: "locale",
-                        type: "string",
-                        max: 16
-                    },
-                    {
-                        name: "viewDistance",
-                        type: "byte"
-                    },
-                    {
-                        name: "chatMode",
-                        type: "varint"
-                    },
-                    {
-                        name: "chatColors",
-                        type: "boolean"
-                    },
-                    {
-                        name: "displayedSkinParts",
-                        type: "byte"
-                    },
-                    {
-                        name: "mainHand",
-                        type: "varint"
-                    }
-                ]
-            },
-            0x0F: {
-                name: "KeepAlive",
-                parameters: [
-                    {
-                        name: "keepAliveId",
-                        type: "long"
-                    }
-                ]
-            },
-            0x11: {
-                name: "PlayerPosition",
-                parameters: [
-                    {
-                        name: "x",
-                        type: "double"
-                    },
-                    {
-                        name: "y",
-                        type: "double"
-                    },
-                    {
-                        name: "z",
-                        type: "double"
-                    },
-                    {
-                        name: "onGround",
-                        type: "boolean"
-                    }
-                ]
-            },
-            0x13: {
-                name: "PlayerLook",
-                parameters: [
-                    {
-                        name: "yaw",
-                        type: "float"
-                    },
-                    {
-                        name: "pitch",
-                        type: "float"
-                    },
-                    {
-                        name: "onGround",
-                        type: "boolean"
-                    }
-                ]
-            },
-            0x1A: {
-                name: "PlayerDigging",
-                parameters: [
-                    {
-                        name: "status",
-                        type: "varint"
-                    },
-                    {
-                        name: "location",
-                        type: "position"
-                    },
-                    {
-                        name: "face",
-                        type: "byte"
-                    }
-                ]
-            },
-            0x2C: {
-                name: "PlayerBlockPlacement",
-                parameters: [
-                    {
-                        name: "hand",
-                        type: "varint"
-                    },
-                    {
-                        name: "location",
-                        type: "position"
-                    },
-                    {
-                        name: "face",
-                        type: "varint"
-                    },
-                    {
-                        name: "cursorPositionX",
-                        type: "float"
-                    },
-                    {
-                        name: "cursorPositionY",
-                        type: "float"
-                    },
-                    {
-                        name: "cursorPositionZ",
-                        type: "float"
-                    },
-                    {
-                        name: "insideBlock",
-                        type: "boolean"
-                    }
-                ]
-            },
-            0x2A: {
-                name: "Animation",
-                parameters: [
-                    {
-                        name: "hand",
-                        type: "varint",
-                        values: {
-                            0: "main",
-                            1: "offhand"
-                        }
-                    }
-                ]
-            },
-            0x1B: {
-                name: "EntityAction",
-                parameters: [
-                    {
-                        name: "entityId",
-                        type: "varint"
-                    },
-                    {
-                        name: "actionId",
-                        type: "varint",
-                        values: {
-                            0: "startSneaking",
-                            1: "stopSneaking",
-                            2: "leaveBed",
-                            3: "startSprinting",
-                            4: "stopSprinting",
-                            5: "startHorseJump",
-                            6: "stopHorseJump",
-                            7: "openHorseInventory",
-                            8: "startFlyingWithElytra"
-                        }
-                    },
-                    {
-                        name: "jumpBoost",
-                        type: "varint"
-                    }
-                ],
-                auto: true
-            },
-            0x12: {
-                name: "PlayerPositionAndLook",
-                parameters: [
-                    {
-                        name: "x",
-                        type: "double"
-                    },
-                    {
-                        name: "y",
-                        type: "double"
-                    },
-                    {
-                        name: "z",
-                        type: "double"
-                    },
-                    {
-                        name: "yaw",
-                        type: "float"
-                    },
-                    {
-                        name: "pitch",
-                        type: "float"
-                    },
-                    {
-                        name: "onGround",
-                        type: "boolean"
-                    }
-                ],
-                log: false,
-                auto: true
-            },
-
-            // TODO
-            0x00: placeholder("TeleportConfirm"),
-            0x01: placeholder("QueryBlockNBT"),
-            0x02: placeholder("SetDifficulty"),
-            0x04: placeholder("ClientStatus"),
-            0x06: placeholder("TabComplete"),
-            0x07: placeholder("ConfirmTransaction"),
-            0x08: placeholder("EnchantItem"),
-            0x09: placeholder("ClickWindow"),
-            0x0A: placeholder("CloseWindow"),
-            0x0B: placeholder("PluginMessage"),
-            0x0C: placeholder("EditBook"),
-            0x0D: placeholder("QueryEntityNBT"),
-            0x0E: placeholder("UseEntity"),
-            0x10: placeholder("LockDifficulty"),
-            0x14: placeholder("Player"),
-            0x15: placeholder("VehicleMove"),
-            0x16: placeholder("SteerBoat"),
-            0x17: placeholder("PickItem"),
-            0x18: placeholder("CraftRecipeRequest"),
-            0x19: placeholder("PlayerAbilities"),
-            0x1C: placeholder("SteerVehicle"),
-            0x1D: placeholder("RecipeBookData"),
-            0x1E: placeholder("NameItem"),
-            0x1F: placeholder("ResourcePackStatus"),
-            0x20: placeholder("AdvancementTab"),
-            0x21: placeholder("SelectTrade"),
-            0x22: placeholder("SetBeaconEffect"),
-            0x23: placeholder("HeldItemChange"),
-            0x24: placeholder("UpdateCommandBlock"),
-            0x25: placeholder("UpdateCommandBlockMinecart"),
-            0x26: placeholder("CreativeInventoryAction"),
-            0x27: placeholder("UpdateJigsawBlock"),
-            0x28: placeholder("UpdateStructureBlock"),
-            0x29: placeholder("UpdateSign"),
-            0x2B: placeholder("Spectate"),
-            0x2D: placeholder("UseItem")
-        }
-    },
-    callbacks: {
-        none: {
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            Handshake: (player, dataLength) => {
-                const version = utils.readVarInt(player);
-                const serverAddress = utils.readString(player, 255);
-                const port = utils.readUShort(player);
-                const nextState = utils.readVarInt(player);
-                if (nextState == 1) {
-                    player.state = "stat";
-                } else if (nextState == 2) {
-                    player.state = "logn";
-                } else {
-                    console.error("Invalid next state: " + nextState);
-                }
-            }
-        },
-        stat: {
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            Request: (player, dataLength) => {
-                const response = utils.createBufferObject();
-                const responseData = {
-                    "version": {
-                        "name": "NodeMC " + version.name,
-                        "protocol": version.version
-                    },
-                    "players": {
-                        "max": player.server.config['max_players'],
-                        "online": player.server.onlinePlayers.length,
-                        "sample": []
-                    },
-                    "description": {
-                        "text": player.server.config['motd']
-                    },
-                    "favicon": "data:image/png;base64," + player.server.icons[Math.floor(Math.random() * player.server.icons.length)]
-                }
-                player.server.onlinePlayers.forEach(player => {
-                    responseData.players.sample.push({
-                        "name": player.username,
-                        "id": player.UUID
-                    });
-                });
-                utils.writeJson(responseData, 32767, response);
-                utils.writePacket(0x00, response, player, "stat", "Response");
-            },
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            Ping: (player, dataLength) => {
-                const payload = utils.readLong(player);
-                const pong = utils.createBufferObject();
-                utils.writeLong(payload, pong);
-                utils.writePacket(0x01, pong, player, "stat", "Pong");
-            }
-        },
-        logn: {
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            LoginStart: (player, dataLength) => {
-                const username = utils.readString(player, 16);
-                player.username = username;
-                const encryptionRequest = utils.createBufferObject();
-                utils.writeString("", 20, encryptionRequest);
-                utils.writeByteArray(player.server.publicKeyDER, encryptionRequest, true);
-                utils.writeByteArray(player.verifyToken, encryptionRequest, true);
-                utils.writePacket(0x01, encryptionRequest, player, "logn", "EncryptionRequest");
-            },
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            EncyptionResponse: (player, dataLength) => {
-                const sharedSecret = Buffer.from(utils.readByteArray(player));
-                player.sharedSecret = crypto.privateDecrypt({ 
-                    key: player.server.privateKeyPEM, 
-                    padding: player.server.encryptionPadding, 
-                    passphrase: player.server.encryptionPassphrase 
-                }, sharedSecret);
-                const verifyToken = Buffer.from(utils.readByteArray(player));
-                const decryptedVerifyToken = crypto.privateDecrypt({ 
-                    key: player.server.privateKeyPEM, 
-                    padding: player.server.encryptionPadding,
-                    passphrase: player.server.encryptionPassphrase
-                }, verifyToken);
-                if (Buffer.compare(decryptedVerifyToken, player.verifyToken) != 0) {
-                    console.log("Client sent back an incorrent verification token, things will probably go badly from here");
-                }
-                player.useEncryption = true;
-                const cryptoServerHash = crypto.createHash('sha1');
-                cryptoServerHash.update("");
-                cryptoServerHash.update(player.sharedSecret);
-                cryptoServerHash.update(player.server.publicKeyDER);                                   // DONT FUCKING TOUCH THIS CODE 
-                const digest = cryptoServerHash.digest();
-                const serverHash = utils.minecraftHexDigest(digest);
-                player.cipher = crypto.createCipheriv("aes-128-cfb8", player.sharedSecret, player.sharedSecret);
-                player.cipher.pipe(player.tcpSocket);
-                player.decipher = crypto.createDecipheriv("aes-128-cfb8", player.sharedSecret, player.sharedSecret);
-                player.tcpSocket.removeListener('readable', player.onStreamReadable);
-                player.tcpSocket.pipe(player.decipher);
-                player.decipher.on('readable', player.onDecipherReadable.bind(player));
-                const setCompression = utils.createBufferObject();
-                utils.writeVarInt(500, setCompression);
-                utils.writePacket(0x03, setCompression, player, "logn", "SetCompression");
-                player.usePacketCompression = true;
-                https.get("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=" + player.username + "&serverId=" + serverHash, (res) => {
-                    let data = '';
-                    res.on('end', () => HandleMojangLoginResponse(player, dataLength, res, data));
-                    res.on('data', (buf) => data += buf.toString());
-                }).on('error', (err) => console.log(err));
-            }
-        },
-        play: {
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            ChatMessage: (player, dataLength, chatMessage) => {
-                // var chatMessage = utils.readString(player, 256);
-                if(chatMessage.startsWith("/")) {
-                    console.log("player command", chatMessage.substr(1));
-                    player.server.commandHandler.runCommand(player, chatMessage.substr(1));
-                    return;
-                }
-                console.log(player.username + ": " + chatMessage);
-                const responseData = {
-                    "text": "",
-                    "extra": [
-                        player.chatName(),
-                        {
-                            "text": " > ",
-                            "bold": true,
-                            "color": "dark_gray"
-                        },
-                        {
-                            "text": chatMessage.replace(/[^a-zA-Z0-9~`!@#$%^&*()_=+* \[\];':",.<>?/\\-]/g, '*')
-                        }
-                    ]
-                };
-
-                player.server.broadcast(responseData);
-            },
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            KeepAlive: (player, dataLength) => {
-                const keepAliveID = utils.readLong(player);
-                const timeSinceLastKeepAlive = new Date().getTime() - player.server.timeOfLastKeepAlive;
-                player.ping = timeSinceLastKeepAlive;
-                const playerInfo = utils.createBufferObject();
-                utils.writeVarInt(2, playerInfo); // Action (Update Latency)
-                utils.writeVarInt(1, playerInfo); // Number of players
-                utils.writeUUID(player, playerInfo) // UUID
-                utils.writeVarInt(player.ping, playerInfo);
-                player.server.writePacketToAll(0x34, playerInfo, "play", "PlayerInfo");
-            },
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            PlayerDigging: (player, dataLength) => {
-                const status = utils.readVarInt(player);
-                const pos = utils.readPosition(player);
-                const face = utils.readBytes(player, 1);
-
-                if(status === 0) {
-                    const blockBreak = utils.createBufferObject();
-                    utils.writePosition(pos, blockBreak);
-                    utils.writeVarInt(0, blockBreak);
-
-                    const blockBreakParticle = utils.createBufferObject();
-                    utils.writeInt(2001, blockBreakParticle);
-                    utils.writePosition(pos, blockBreakParticle);
-                    utils.writeInt(1, blockBreakParticle);
-                    utils.writeByte(0, blockBreakParticle);
-
-                    player.server.writePacketToAll(0x0C, blockBreak, "play", "BlockUpdate", [player]);
-                    player.server.writePacketToAll(0x23, blockBreakParticle, "play", "Effect", [player]);
-                }
-                
-                
-            },
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            PlayerPosition: (player, dataLength) => {
-                const oldX = player.location.x;
-                const oldY = player.location.y;
-                const oldZ = player.location.z;
-                const newX = player.location.x = utils.readDouble(player);
-                const newY = player.location.y = utils.readDouble(player);
-                const newZ = player.location.z = utils.readDouble(player);
-                const deltaX = Math.round(((newX * 32) - (oldX * 32)) * 128);
-                const deltaY = Math.round(((newY * 32) - (oldY * 32)) * 128);
-                const deltaZ = Math.round(((newZ * 32) - (oldZ * 32)) * 128);
-                player.onGround = utils.readBoolean(player);
-                const entityRelativeMove = utils.createBufferObject();
-                utils.writeVarInt(player.entityID, entityRelativeMove);
-                utils.writeShort(deltaX, entityRelativeMove);
-                utils.writeShort(deltaY, entityRelativeMove);
-                utils.writeShort(deltaZ, entityRelativeMove);
-                utils.writeByte(player.onGround ? 1 : 0, entityRelativeMove);
-                player.server.writePacketToAll(0x29, entityRelativeMove, "play", "EntityRelativeMove", [player]);
-            },
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            PlayerLook: (player, dataLength) => {
-                const yaw = player.location.yaw = utils.readFloat(player);
-                const pitch = player.location.pitch = utils.readFloat(player);
-                const onGround = player.onGround = utils.readBoolean(player);
-                const entityLook = utils.createBufferObject();
-                utils.writeVarInt(player.entityID, entityLook);
-                utils.writeAngle(yaw, entityLook);
-                utils.writeAngle(pitch, entityLook);
-                utils.writeByte(onGround ? 1 : 0, entityLook);
-                player.server.writePacketToAll(0x2B, entityLook, "play", "EntityLook", [player]);
-            },
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            PlayerBlockPlacement: (player, dataLength) => {
-                const hand = utils.readVarInt(player);
-                const location = utils.readPosition(player);
-                const face = utils.readVarInt(player);
-                const cursorX = utils.readFloat(player);
-                const cursorY = utils.readFloat(player);
-                const cursorZ = utils.readFloat(player);
-                const insideBlock = utils.readBoolean(player);
-            },
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            Animation: (player, dataLength) => {
-                const hand = utils.readVarInt(player);
-                const animation = utils.createBufferObject();
-                utils.writeVarInt(player.entityID, animation);
-                utils.writeByte(hand == 0 ? 0 : 3, animation);
-                player.server.writePacketToAll(0x06, animation, "play", "Animation", [player]);
-            },
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            ClientSettings: (player, dataLength) => {
-                const locale = utils.readString(player, 16);
-                const viewDistance = utils.readBytes(player, 1);
-                const chatMode = utils.readVarInt(player);
-                const chatColors = utils.readBoolean(player);
-                player.displayedSkinParts = utils.readBytes(player, 1)[0];
-                const mainHand = utils.readVarInt(player);
-
-                const entityMetadata = utils.createBufferObject();
-                utils.writeVarInt(player.entityID, entityMetadata);
-                utils.writeByte(16, entityMetadata); // Displayed Skin Parts
-                utils.writeVarInt(0, entityMetadata);
-                utils.writeByte(player.displayedSkinParts, entityMetadata);
-                utils.writeByte(0xff, entityMetadata); // End of metadata
-                player.server.writePacketToAll(0x44, entityMetadata, "play", "EntityMetadata"/*, [player]*/);
-            },
-            /**
-             * @param {Player} player
-             * @param {number} dataLength
-             */
-            EntityAction: (player, dataLength, entityId, actionId, jumpBoost) => {
-                switch(actionId) {
-                    case "startSneaking":
-                        player.isSneaking = true;
-                        break;
-                    case "stopSneaking":
-                        player.isSneaking = false;
-                        break;
-                    case "leaveBed":
-                        break;
-                    case "startSprinting":
-                        player.isSprinting = true;
-                        break;
-                    case "stopSprinting":
-                        player.isSprinting = false;
-                        break;
-                    case "startHorseJump":
-                        break;
-                    case "stopHorseJump":
-                        break;
-                    case "openHorseInventory":
-                        break;
-                    case "startFlyingWithElytra":
-                        break;
-                }
-
-                const entityMetadata = utils.createBufferObject();
-                utils.writeVarInt(player.entityID, entityMetadata);
-                utils.writeByte(0, entityMetadata); // Status meta data
-                utils.writeVarInt(1, entityMetadata);
-                utils.writeVarInt(player.getStatusMetaDataBitMask(), entityMetadata);
-                utils.writeByte(0xff, entityMetadata); // End of metadata
-                player.server.writePacketToAll(0x44, entityMetadata, "play", "EntityMetadata", [player]);
-            },
-            PlayerPositionAndLook: (player, dataLength, newX, newY, newZ, yaw, pitch, onGround) => {
-                const oldX = player.location.x;
-                const oldY = player.location.y;
-                const oldZ = player.location.z;
-
-                player.location.x = newX;
-                player.location.y = newY;
-                player.location.z = newZ;
-                player.location.yaw = yaw;
-                player.location.pitch = pitch;
-                player.onGround = onGround;
-
-                const deltaX = Math.round(((newX * 32) - (oldX * 32)) * 128);
-                const deltaY = Math.round(((newY * 32) - (oldY * 32)) * 128);
-                const deltaZ = Math.round(((newZ * 32) - (oldZ * 32)) * 128);
-                
-                const entityLookAndRelativeMove = utils.createBufferObject();
-                utils.writeVarInt(player.entityID, entityLookAndRelativeMove);
-                utils.writeShort(deltaX, entityLookAndRelativeMove);
-                utils.writeShort(deltaY, entityLookAndRelativeMove);
-                utils.writeShort(deltaZ, entityLookAndRelativeMove);
-                utils.writeAngle(yaw, entityLookAndRelativeMove);
-                utils.writeAngle(pitch, entityLookAndRelativeMove);
-                utils.writeByte(player.onGround ? 1 : 0, entityLookAndRelativeMove);
-                player.server.writePacketToAll(0x2A, entityLookAndRelativeMove, "play", "EntityLookAndRelativeMove", [player]);
-                
-                const entityLook = utils.createBufferObject();
-                utils.writeVarInt(player.entityID, entityLook);
-                utils.writeAngle(yaw, entityLook);
-                utils.writeAngle(pitch, entityLook);
-                utils.writeByte(player.onGround ? 1 : 0, entityLook);
-                player.server.writePacketToAll(0x2B, entityLook, "play", "EntityLook", [player]);
-            },
-
-
-            // TODO
-            TeleportConfirm: () => { },
-            QueryBlockNBT: () => { },
-            ClientStatus: () => { },
-            TabComplete: () => { },
-            ConfirmTransaction: () => { },
-            EnchantItem: () => { },
-            ClickWindow: () => { },
-            CloseWindow: () => { },
-            PluginMessage: () => { },
-            QueryEntityNBT: () => { },
-            UseEntity: () => { },
-            EditBook: () => { },
-            Player: () => { },
-            VehicleMove: () => { },
-            SteerBoat: () => { },
-            PickItem: () => { },
-            CraftRecipeRequest: () => { },
-            PlayerAbilities: () => { },
-            SteerVehicle: () => { },
-            RecipeBookData: () => { },
-            NameItem: () => { },
-            ResourcePackStatus: () => { },
-            AdvancementTab: () => { },
-            SelectTrade: () => { },
-            SetBeaconEffect: () => { },
-            HeldItemChange: () => { },
-            UpdateCommandBlock: () => { },
-            UpdateCommandBlockMinecart: () => { },
-            CreativeInventoryAction: () => { },
-            UpdateStructureBlock: () => { },
-            UpdateSign: () => { },
-            Spectate: () => { },
-            UseItem: () => { }
-        }
-    }
+    
 }
+
+version.types = {
+};
+
+version.outboundPackets = {
+    none: {},
+    stat: {},
+    login: {},
+    play: {}
+};
+
+version.inboundPackets = {
+    none: {
+        0x00: {
+            name: "Handshake",
+            parameters: [
+                {
+                    name: "version",
+                    type: "varint"
+                },
+                {
+                    name: "port",
+                    type: "ushort"
+                },
+                {
+                    name: "NextState",
+                    type: "varint"
+                }
+            ],
+        }
+    },
+    stat: {
+        0x00: {
+            name: "Request",
+            parameters: []
+        },
+        0x01: {
+            name: "Ping",
+            parameters: [
+                {
+                    name: "pingId",
+                    type: "long"
+                }
+            ]
+        }
+    },
+    logn: {
+        0x00: {
+            name: "LoginStart",
+            parameters: [
+                {
+                    name: "username",
+                    type: "string",
+                    max: 16
+                }
+            ]
+        },
+        0x01: {
+            name: "EncyptionResponse",
+            parameters: [
+                {
+                    name: "sharedSecret",
+                    lengthType: "varint",
+                    type: "byte[]"
+                },
+                {
+                    name: "verifyToken",
+                    lengthType: "varint",
+                    type: "byte[]"
+                }
+            ]
+        }
+    },
+    play: {
+        0x03: {
+            name: "ChatMessage",
+            parameters: [
+                {
+                    name: "message",
+                    type: "string",
+                    max: 256
+                }
+            ],
+            auto: true
+        },
+        0x05: {
+            name: "ClientSettings",
+            parameters: [
+                {
+                    name: "locale",
+                    type: "string",
+                    max: 16
+                },
+                {
+                    name: "viewDistance",
+                    type: "byte"
+                },
+                {
+                    name: "chatMode",
+                    type: "varint"
+                },
+                {
+                    name: "chatColors",
+                    type: "boolean"
+                },
+                {
+                    name: "displayedSkinParts",
+                    type: "byte"
+                },
+                {
+                    name: "mainHand",
+                    type: "varint"
+                }
+            ]
+        },
+        0x0F: {
+            name: "KeepAlive",
+            parameters: [
+                {
+                    name: "keepAliveId",
+                    type: "long"
+                }
+            ]
+        },
+        0x11: {
+            name: "PlayerPosition",
+            parameters: [
+                {
+                    name: "x",
+                    type: "double"
+                },
+                {
+                    name: "y",
+                    type: "double"
+                },
+                {
+                    name: "z",
+                    type: "double"
+                },
+                {
+                    name: "onGround",
+                    type: "boolean"
+                }
+            ]
+        },
+        0x13: {
+            name: "PlayerLook",
+            parameters: [
+                {
+                    name: "yaw",
+                    type: "float"
+                },
+                {
+                    name: "pitch",
+                    type: "float"
+                },
+                {
+                    name: "onGround",
+                    type: "boolean"
+                }
+            ]
+        },
+        0x1A: {
+            name: "PlayerDigging",
+            parameters: [
+                {
+                    name: "status",
+                    type: "varint"
+                },
+                {
+                    name: "location",
+                    type: "position"
+                },
+                {
+                    name: "face",
+                    type: "byte"
+                }
+            ]
+        },
+        0x2C: {
+            name: "PlayerBlockPlacement",
+            parameters: [
+                {
+                    name: "hand",
+                    type: "varint"
+                },
+                {
+                    name: "location",
+                    type: "position"
+                },
+                {
+                    name: "face",
+                    type: "varint"
+                },
+                {
+                    name: "cursorPositionX",
+                    type: "float"
+                },
+                {
+                    name: "cursorPositionY",
+                    type: "float"
+                },
+                {
+                    name: "cursorPositionZ",
+                    type: "float"
+                },
+                {
+                    name: "insideBlock",
+                    type: "boolean"
+                }
+            ]
+        },
+        0x2A: {
+            name: "Animation",
+            parameters: [
+                {
+                    name: "hand",
+                    type: "varint",
+                    values: {
+                        0: "main",
+                        1: "offhand"
+                    }
+                }
+            ]
+        },
+        0x1B: {
+            name: "EntityAction",
+            parameters: [
+                {
+                    name: "entityId",
+                    type: "varint"
+                },
+                {
+                    name: "actionId",
+                    type: "varint",
+                    values: {
+                        0: "startSneaking",
+                        1: "stopSneaking",
+                        2: "leaveBed",
+                        3: "startSprinting",
+                        4: "stopSprinting",
+                        5: "startHorseJump",
+                        6: "stopHorseJump",
+                        7: "openHorseInventory",
+                        8: "startFlyingWithElytra"
+                    }
+                },
+                {
+                    name: "jumpBoost",
+                    type: "varint"
+                }
+            ],
+            auto: true
+        },
+        0x12: {
+            name: "PlayerPositionAndLook",
+            parameters: [
+                {
+                    name: "x",
+                    type: "double"
+                },
+                {
+                    name: "y",
+                    type: "double"
+                },
+                {
+                    name: "z",
+                    type: "double"
+                },
+                {
+                    name: "yaw",
+                    type: "float"
+                },
+                {
+                    name: "pitch",
+                    type: "float"
+                },
+                {
+                    name: "onGround",
+                    type: "boolean"
+                }
+            ],
+            log: false,
+            auto: true
+        },
+
+        // TODO
+        0x00: placeholder("TeleportConfirm"),
+        0x01: placeholder("QueryBlockNBT"),
+        0x02: placeholder("SetDifficulty"),
+        0x04: placeholder("ClientStatus"),
+        0x06: placeholder("TabComplete"),
+        0x07: placeholder("ConfirmTransaction"),
+        0x08: placeholder("EnchantItem"),
+        0x09: placeholder("ClickWindow"),
+        0x0A: placeholder("CloseWindow"),
+        0x0B: placeholder("PluginMessage"),
+        0x0C: placeholder("EditBook"),
+        0x0D: placeholder("QueryEntityNBT"),
+        0x0E: placeholder("UseEntity"),
+        0x10: placeholder("LockDifficulty"),
+        0x14: placeholder("Player"),
+        0x15: placeholder("VehicleMove"),
+        0x16: placeholder("SteerBoat"),
+        0x17: placeholder("PickItem"),
+        0x18: placeholder("CraftRecipeRequest"),
+        0x19: placeholder("PlayerAbilities"),
+        0x1C: placeholder("SteerVehicle"),
+        0x1D: placeholder("RecipeBookData"),
+        0x1E: placeholder("NameItem"),
+        0x1F: placeholder("ResourcePackStatus"),
+        0x20: placeholder("AdvancementTab"),
+        0x21: placeholder("SelectTrade"),
+        0x22: placeholder("SetBeaconEffect"),
+        0x23: placeholder("HeldItemChange"),
+        0x24: placeholder("UpdateCommandBlock"),
+        0x25: placeholder("UpdateCommandBlockMinecart"),
+        0x26: placeholder("CreativeInventoryAction"),
+        0x27: placeholder("UpdateJigsawBlock"),
+        0x28: placeholder("UpdateStructureBlock"),
+        0x29: placeholder("UpdateSign"),
+        0x2B: placeholder("Spectate"),
+        0x2D: placeholder("UseItem")
+    }
+};
+
+version.callbacks = {
+    none: {
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        Handshake: (player, dataLength) => {
+            const version = utils.readVarInt(player);
+            const serverAddress = utils.readString(player, 255);
+            const port = utils.readUShort(player);
+            const nextState = utils.readVarInt(player);
+            if (nextState == 1) {
+                player.state = "stat";
+            } else if (nextState == 2) {
+                player.state = "logn";
+            } else {
+                console.error("Invalid next state: " + nextState);
+            }
+        }
+    },
+    stat: {
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        Request: (player, dataLength) => {
+            const response = utils.createBufferObject();
+            const responseData = {
+                "version": {
+                    "name": "NodeMC " + version.name,
+                    "protocol": version.version
+                },
+                "players": {
+                    "max": player.server.config['max_players'],
+                    "online": player.server.onlinePlayers.length,
+                    "sample": []
+                },
+                "description": {
+                    "text": player.server.config['motd']
+                },
+                "favicon": "data:image/png;base64," + player.server.icons[Math.floor(Math.random() * player.server.icons.length)]
+            }
+            player.server.onlinePlayers.forEach(player => {
+                responseData.players.sample.push({
+                    "name": player.username,
+                    "id": player.UUID
+                });
+            });
+            utils.writeJson(responseData, 32767, response);
+            utils.writePacket(0x00, response, player, "stat", "Response");
+        },
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        Ping: (player, dataLength) => {
+            const payload = utils.readLong(player);
+            const pong = utils.createBufferObject();
+            utils.writeLong(payload, pong);
+            utils.writePacket(0x01, pong, player, "stat", "Pong");
+        }
+    },
+    logn: {
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        LoginStart: (player, dataLength) => {
+            const username = utils.readString(player, 16);
+            player.username = username;
+            const encryptionRequest = utils.createBufferObject();
+            utils.writeString("", 20, encryptionRequest);
+            utils.writeByteArray(player.server.publicKeyDER, encryptionRequest, true);
+            utils.writeByteArray(player.verifyToken, encryptionRequest, true);
+            utils.writePacket(0x01, encryptionRequest, player, "logn", "EncryptionRequest");
+        },
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        EncyptionResponse: (player, dataLength) => {
+            const sharedSecret = Buffer.from(utils.readByteArray(player));
+            player.sharedSecret = crypto.privateDecrypt({ 
+                key: player.server.privateKeyPEM, 
+                padding: player.server.encryptionPadding, 
+                passphrase: player.server.encryptionPassphrase 
+            }, sharedSecret);
+            const verifyToken = Buffer.from(utils.readByteArray(player));
+            const decryptedVerifyToken = crypto.privateDecrypt({ 
+                key: player.server.privateKeyPEM, 
+                padding: player.server.encryptionPadding,
+                passphrase: player.server.encryptionPassphrase
+            }, verifyToken);
+            if (Buffer.compare(decryptedVerifyToken, player.verifyToken) != 0) {
+                console.log("Client sent back an incorrent verification token, things will probably go badly from here");
+            }
+            player.useEncryption = true;
+            const cryptoServerHash = crypto.createHash('sha1');
+            cryptoServerHash.update("");
+            cryptoServerHash.update(player.sharedSecret);
+            cryptoServerHash.update(player.server.publicKeyDER);                                   // DONT FUCKING TOUCH THIS CODE 
+            const digest = cryptoServerHash.digest();
+            const serverHash = utils.minecraftHexDigest(digest);
+            player.cipher = crypto.createCipheriv("aes-128-cfb8", player.sharedSecret, player.sharedSecret);
+            player.cipher.pipe(player.tcpSocket);
+            player.decipher = crypto.createDecipheriv("aes-128-cfb8", player.sharedSecret, player.sharedSecret);
+            player.tcpSocket.removeListener('readable', player.onStreamReadable);
+            player.tcpSocket.pipe(player.decipher);
+            player.decipher.on('readable', player.onDecipherReadable.bind(player));
+            const setCompression = utils.createBufferObject();
+            utils.writeVarInt(500, setCompression);
+            utils.writePacket(0x03, setCompression, player, "logn", "SetCompression");
+            player.usePacketCompression = true;
+            https.get("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=" + player.username + "&serverId=" + serverHash, (res) => {
+                let data = '';
+                res.on('end', () => HandleMojangLoginResponse(player, dataLength, res, data));
+                res.on('data', (buf) => data += buf.toString());
+            }).on('error', (err) => console.log(err));
+        }
+    },
+    play: {
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        ChatMessage: (player, dataLength, chatMessage) => {
+            // var chatMessage = utils.readString(player, 256);
+            if(chatMessage.startsWith("/")) {
+                console.log("player command", chatMessage.substr(1));
+                player.server.commandHandler.runCommand(player, chatMessage.substr(1));
+                return;
+            }
+            console.log(player.username + ": " + chatMessage);
+            const responseData = {
+                "text": "",
+                "extra": [
+                    player.chatName(),
+                    {
+                        "text": " > ",
+                        "bold": true,
+                        "color": "dark_gray"
+                    },
+                    {
+                        "text": chatMessage.replace(/[^a-zA-Z0-9~`!@#$%^&*()_=+* \[\];':",.<>?/\\-]/g, '*')
+                    }
+                ]
+            };
+
+            player.server.broadcast(responseData);
+        },
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        KeepAlive: (player, dataLength) => {
+            const keepAliveID = utils.readLong(player);
+            const timeSinceLastKeepAlive = new Date().getTime() - player.server.timeOfLastKeepAlive;
+            player.ping = timeSinceLastKeepAlive;
+            const playerInfo = utils.createBufferObject();
+            utils.writeVarInt(2, playerInfo); // Action (Update Latency)
+            utils.writeVarInt(1, playerInfo); // Number of players
+            utils.writeUUID(player, playerInfo) // UUID
+            utils.writeVarInt(player.ping, playerInfo);
+            player.server.writePacketToAll(0x34, playerInfo, "play", "PlayerInfo");
+        },
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        PlayerDigging: (player, dataLength) => {
+            const status = utils.readVarInt(player);
+            const pos = utils.readPosition(player);
+            const face = utils.readBytes(player, 1);
+
+            if(status === 0) {
+                const blockBreak = utils.createBufferObject();
+                utils.writePosition(pos, blockBreak);
+                utils.writeVarInt(0, blockBreak);
+
+                const blockBreakParticle = utils.createBufferObject();
+                utils.writeInt(2001, blockBreakParticle);
+                utils.writePosition(pos, blockBreakParticle);
+                utils.writeInt(1, blockBreakParticle);
+                utils.writeByte(0, blockBreakParticle);
+
+                player.server.writePacketToAll(0x0C, blockBreak, "play", "BlockUpdate", [player]);
+                player.server.writePacketToAll(0x23, blockBreakParticle, "play", "Effect", [player]);
+            }
+            
+            
+        },
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        PlayerPosition: (player, dataLength) => {
+            const oldX = player.location.x;
+            const oldY = player.location.y;
+            const oldZ = player.location.z;
+            const newX = player.location.x = utils.readDouble(player);
+            const newY = player.location.y = utils.readDouble(player);
+            const newZ = player.location.z = utils.readDouble(player);
+            const deltaX = Math.round(((newX * 32) - (oldX * 32)) * 128);
+            const deltaY = Math.round(((newY * 32) - (oldY * 32)) * 128);
+            const deltaZ = Math.round(((newZ * 32) - (oldZ * 32)) * 128);
+            player.onGround = utils.readBoolean(player);
+            const entityRelativeMove = utils.createBufferObject();
+            utils.writeVarInt(player.entityID, entityRelativeMove);
+            utils.writeShort(deltaX, entityRelativeMove);
+            utils.writeShort(deltaY, entityRelativeMove);
+            utils.writeShort(deltaZ, entityRelativeMove);
+            utils.writeByte(player.onGround ? 1 : 0, entityRelativeMove);
+            player.server.writePacketToAll(0x29, entityRelativeMove, "play", "EntityRelativeMove", [player]);
+        },
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        PlayerLook: (player, dataLength) => {
+            const yaw = player.location.yaw = utils.readFloat(player);
+            const pitch = player.location.pitch = utils.readFloat(player);
+            const onGround = player.onGround = utils.readBoolean(player);
+            const entityLook = utils.createBufferObject();
+            utils.writeVarInt(player.entityID, entityLook);
+            utils.writeAngle(yaw, entityLook);
+            utils.writeAngle(pitch, entityLook);
+            utils.writeByte(onGround ? 1 : 0, entityLook);
+            player.server.writePacketToAll(0x2B, entityLook, "play", "EntityLook", [player]);
+
+            const entityHeadLook = utils.createBufferObject();
+            utils.writeVarInt(player.entityID, entityHeadLook);
+            utils.writeAngle(yaw, entityHeadLook);
+            player.server.writePacketToAll(0x3C, entityHeadLook, "play", "EntityHeadLook", [player]);
+        },
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        PlayerBlockPlacement: (player, dataLength) => {
+            const hand = utils.readVarInt(player);
+            const location = utils.readPosition(player);
+            const face = utils.readVarInt(player);
+            const cursorX = utils.readFloat(player);
+            const cursorY = utils.readFloat(player);
+            const cursorZ = utils.readFloat(player);
+            const insideBlock = utils.readBoolean(player);
+        },
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        Animation: (player, dataLength) => {
+            const hand = utils.readVarInt(player);
+            const animation = utils.createBufferObject();
+            utils.writeVarInt(player.entityID, animation);
+            utils.writeByte(hand == 0 ? 0 : 3, animation);
+            player.server.writePacketToAll(0x06, animation, "play", "Animation", [player]);
+        },
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        ClientSettings: (player, dataLength) => {
+            const locale = utils.readString(player, 16);
+            const viewDistance = utils.readBytes(player, 1);
+            const chatMode = utils.readVarInt(player);
+            const chatColors = utils.readBoolean(player);
+            player.displayedSkinParts = utils.readBytes(player, 1)[0];
+            const mainHand = utils.readVarInt(player);
+
+            const entityMetadata = utils.createBufferObject();
+            utils.writeVarInt(player.entityID, entityMetadata);
+            utils.writeByte(16, entityMetadata); // Displayed Skin Parts
+            utils.writeVarInt(0, entityMetadata);
+            utils.writeByte(player.displayedSkinParts, entityMetadata);
+            utils.writeByte(0xff, entityMetadata); // End of metadata
+            player.server.writePacketToAll(0x44, entityMetadata, "play", "EntityMetadata"/*, [player]*/);
+        },
+        /**
+         * @param {Player} player
+         * @param {number} dataLength
+         */
+        EntityAction: (player, dataLength, entityId, actionId, jumpBoost) => {
+            switch(actionId) {
+                case "startSneaking":
+                    player.isSneaking = true;
+                    break;
+                case "stopSneaking":
+                    player.isSneaking = false;
+                    break;
+                case "leaveBed":
+                    break;
+                case "startSprinting":
+                    player.isSprinting = true;
+                    break;
+                case "stopSprinting":
+                    player.isSprinting = false;
+                    break;
+                case "startHorseJump":
+                    break;
+                case "stopHorseJump":
+                    break;
+                case "openHorseInventory":
+                    break;
+                case "startFlyingWithElytra":
+                    break;
+            }
+
+            const entityMetadata = utils.createBufferObject();
+            utils.writeVarInt(player.entityID, entityMetadata);
+            utils.writeByte(0, entityMetadata); // Status meta data
+            utils.writeVarInt(1, entityMetadata);
+            utils.writeVarInt(player.getStatusMetaDataBitMask(), entityMetadata);
+            utils.writeByte(0xff, entityMetadata); // End of metadata
+            player.server.writePacketToAll(0x44, entityMetadata, "play", "EntityMetadata", [player]);
+        },
+        PlayerPositionAndLook: (player, dataLength, newX, newY, newZ, yaw, pitch, onGround) => {
+            const oldX = player.location.x;
+            const oldY = player.location.y;
+            const oldZ = player.location.z;
+
+            player.location.x = newX;
+            player.location.y = newY;
+            player.location.z = newZ;
+            player.location.yaw = yaw;
+            player.location.pitch = pitch;
+            player.onGround = onGround;
+
+            const deltaX = Math.round(((newX * 32) - (oldX * 32)) * 128);
+            const deltaY = Math.round(((newY * 32) - (oldY * 32)) * 128);
+            const deltaZ = Math.round(((newZ * 32) - (oldZ * 32)) * 128);
+            
+            const entityLookAndRelativeMove = utils.createBufferObject();
+            utils.writeVarInt(player.entityID, entityLookAndRelativeMove);
+            utils.writeShort(deltaX, entityLookAndRelativeMove);
+            utils.writeShort(deltaY, entityLookAndRelativeMove);
+            utils.writeShort(deltaZ, entityLookAndRelativeMove);
+            utils.writeAngle(yaw, entityLookAndRelativeMove);
+            utils.writeAngle(pitch, entityLookAndRelativeMove);
+            utils.writeByte(player.onGround ? 1 : 0, entityLookAndRelativeMove);
+            player.server.writePacketToAll(0x2A, entityLookAndRelativeMove, "play", "EntityLookAndRelativeMove", [player]);
+
+            const entityHeadLook = utils.createBufferObject();
+            utils.writeVarInt(player.entityID, entityHeadLook);
+            utils.writeAngle(yaw, entityHeadLook);
+            player.server.writePacketToAll(0x3C, entityHeadLook, "play", "EntityHeadLook", [player]);
+        },
+
+
+        // TODO
+        TeleportConfirm: () => { },
+        QueryBlockNBT: () => { },
+        ClientStatus: () => { },
+        TabComplete: () => { },
+        ConfirmTransaction: () => { },
+        EnchantItem: () => { },
+        ClickWindow: () => { },
+        CloseWindow: () => { },
+        PluginMessage: () => { },
+        QueryEntityNBT: () => { },
+        UseEntity: () => { },
+        EditBook: () => { },
+        Player: () => { },
+        VehicleMove: () => { },
+        SteerBoat: () => { },
+        PickItem: () => { },
+        CraftRecipeRequest: () => { },
+        PlayerAbilities: () => { },
+        SteerVehicle: () => { },
+        RecipeBookData: () => { },
+        NameItem: () => { },
+        ResourcePackStatus: () => { },
+        AdvancementTab: () => { },
+        SelectTrade: () => { },
+        SetBeaconEffect: () => { },
+        HeldItemChange: () => { },
+        UpdateCommandBlock: () => { },
+        UpdateCommandBlockMinecart: () => { },
+        CreativeInventoryAction: () => { },
+        UpdateStructureBlock: () => { },
+        UpdateSign: () => { },
+        Spectate: () => { },
+        UseItem: () => { }
+    }
+};
 
 module.exports = version;
