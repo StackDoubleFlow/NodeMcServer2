@@ -107,20 +107,153 @@ class MinecraftServer {
         this.commandHandler.addCommand(this, {name: "eval"}, (context) => {
             context.sender.sendMessage("" + eval(context.argString));
         });
+        this.commandHandler.addCommand(this, {name: "kick"}, (context) => {
+            if (context.args.length === 0) {
+                context.sender.sendMessage({
+                    text: "You must specify a player",
+                    color: "red"
+                });
+                return;
+            }
+            
+            const player = this.getOnlinePlayer(context.args[0]);
+
+            if (!player) {
+                context.sender.sendMessage({
+                    text: "Player '" + context.args[0] + "' not found",
+                    color: "red"
+                });
+                return;
+            }
+
+            let message = {text: "Kicked by an admin", color: "gold"};
+
+            if (context.args.length > 1) {
+                message = context.argString.substr(context.args[0].length + 1);
+            }
+
+            player.kick(message);
+        });
+        this.commandHandler.addCommand(this, {name: "tell", aliases: ["w", "whisper", "msg", "message"]}, (context) => {
+            if (context.args.length === 0) {
+                context.sender.sendMessage({
+                    text: "You must specify a recipient and message",
+                    color: "red"
+                });
+                return;
+            } else if(context.args.length === 1) {
+                context.sender.sendMessage({
+                    text: "You must supply a message",
+                    color: "red"
+                });
+                return;
+            }
+
+            const player = this.getOnlinePlayer(context.args[0]);
+
+            if (!player) {
+                context.sender.sendMessage({
+                    text: "Player '" + context.args[0] + "' not found",
+                    color: "red"
+                });
+                return;
+            }
+            
+            const message = context.argString.substr(context.args[0].length + 1);
+
+            context.sender.lastMessaged = player;
+            player.lastMessaged = context.sender;
+
+            context.sender.sendMessage({
+                text: "[ Me -> " + player.username + " ] " + message
+            });
+
+            player.sendMessage({
+                text: "[ " + context.sender.username + " -> Me ] " + message
+            });
+        });
+        
+        this.commandHandler.addCommand(this, {name: "reply", aliases: ["r"]}, (context) => {
+            if(context.args.length === 0) {
+                context.sender.sendMessage({
+                    text: "You must supply a message",
+                    color: "red"
+                });
+                return;
+            }
+
+            if (!context.sender.lastMessaged) {
+                context.sender.sendMessage({
+                    text: "You have no one to reply to",
+                    color: "red"
+                });
+                return;
+            }
+
+            const player = context.sender.lastMessaged;
+            const message = context.argString;
+
+            context.sender.sendMessage({
+                text: "[ Me -> " + player.username + " ] " + message
+            });
+
+            player.sendMessage({
+                text: "[ " + context.sender.username + " -> Me ] " + message
+            });
+        });
 
         this.username = "CONSOLE";
         this.uuid = null;
+        this.lastTick = 0;
+        this.tickCount = 0;
+
+        this.tick();
+    }
+
+    tick() {
+        this.lastTick = (new Date()).getTime();
+
+        // Do ticky stuff
+        // TODO: RTS
+
+        if(this.tickCount % 20 === 0) {
+            // Update world time
+        }
+
+        if (this.tickCount % 2 == 0) {
+            // Redstone
+        }
+
+        this.tickCount++;
+        setTimeout(() => this.tick(), 50 - ((new Date()).getTime() - this.lastTick));
     }
 
     sendMessage(msg) {
         console.log(msg);
     }
 
+    getOnlinePlayer(query) {
+        query = query.toLowerCase();
+
+        const options = [];
+
+        const uuidSearch = this.onlinePlayers.find(v => v.UUID.toLowerCase() === query);
+        if(uuidSearch) return uuidSearch;
+
+        const fullSearch = this.onlinePlayers.find(v => v.username.toLowerCase() === query);
+        if(fullSearch) return fullSearch;
+
+        const firstSearch = this.onlinePlayers.find(v => v.username.toLowerCase().startsWith(query));
+        if(firstSearch) return firstSearch;
+
+        return null;
+    }
+
     sendKeepAlive() {
         var keepAlive = utils.createBufferObject();
         this.timeOfLastKeepAlive = new Date().getTime();
         utils.writeLong(this.timeOfLastKeepAlive, keepAlive);
-        this.writePacketToAll(0x20, keepAlive, "play", "KeepAlive");
+        this.writePacketToAll(0x21, keepAlive, "play", "KeepAlive");
     }
 
     /**
@@ -201,7 +334,7 @@ class MinecraftServer {
         utils.writeVarInt(4, playerInfo); // Action (Remove Player)
         utils.writeVarInt(1, playerInfo); // Number of players
         utils.writeUUID(player, playerInfo) // UUID
-        this.writePacketToAll(0x33, playerInfo, "play", "PlayerInfo");
+        this.writePacketToAll(0x34, playerInfo, "play", "PlayerInfo");
 
     }
 
@@ -250,7 +383,7 @@ class MinecraftServer {
         utils.writeJson(message, 32767, response);
         utils.writeByte(type, response);
 
-        this.writePacketToAll(0x0E, response, "play", "ChatMessage");
+        this.writePacketToAll(0x0F, response, "play", "ChatMessage");
     }
 
     stop() {

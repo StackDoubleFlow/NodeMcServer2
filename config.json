@@ -3,5 +3,6 @@
     "port": 25566,
     "icon_file": "icons",
     "max_players": 100,
-    "world_file": "world.nodemc"
+    "world_file": "world.nodemc",
+    "offline_mode": true
 }

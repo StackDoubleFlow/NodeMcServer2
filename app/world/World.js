@@ -38,6 +38,12 @@ class World {
         utils.writeVarInt(0x1, fullPacket);
         // Heightmaps
         utils.writeHeightmap(fullPacket);
+        if(fullChunk) {
+            // Biomes
+            for(let i = 0; i < 1024; i++) {
+                utils.writeInt(0, fullPacket);
+            }
+        }
         // Chunk data
         this.getChunkData(x, z, fullPacket);
         // Block Entities
@@ -66,10 +72,6 @@ class World {
         //utils.appendData(data, this.getChunkSection(x, 13, z));
         //utils.appendData(data, this.getChunkSection(x, 14, z));
         //utils.appendData(data, this.getChunkSection(x, 15, z));
-        // Biomes
-        for(let i = 0; i < 256; i++) {
-            utils.writeInt(0, data);
-        }
         // Write length in bytes
         utils.writeVarInt(data.b.length, fullPacket);
         // Write data structures

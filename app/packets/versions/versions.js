@@ -1,8 +1,10 @@
 const versions = {
-  defaultVersion: 477,
-  supportedVersions: [ 477 ],
+  defaultVersion: 575,
+  supportedVersions: [ 575 ],
 
   // id, name
+  575: "1.15.1",
+  573: "1.15",
   498: "1.14.4",
   490: "1.14.3",
   485: "1.14.2",
@@ -26,6 +28,8 @@ const versions = {
   4: "1.7.5",
 
   // name, id
+  "1.15.1": 575,
+  "1.15": 573,
   "1.14.4": 498,
   "1.14.3": 490,
   "1.14.2": 485,

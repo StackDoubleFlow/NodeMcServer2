@@ -15,7 +15,7 @@ class PacketManager {
      * @param {(string|number)} [version=1.14] Version name or protocol version number. (eg `"1.14"` or `477`)
      */
     constructor(version) {
-        if (!version) version = "1.14";
+        if (!version) version = "1.15.1";
         /**
          * Version number
          * 

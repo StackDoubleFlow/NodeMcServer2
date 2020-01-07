@@ -233,7 +233,7 @@ export default class Player {
         const response = utils.createBufferObject();
         utils.writeJson(message, 32767, response);
         utils.writeByte(type, response);
-        utils.writePacket(0x0E, response, this, "play", "ChatMessage");
+        utils.writePacket(0x0F, response, this, "play", "ChatMessage");
     }
 
     kick(reason) {
@@ -243,7 +243,7 @@ export default class Player {
         
         const response = utils.createBufferObject();
         utils.writeJson(reason, 32767, response);
-        utils.writePacket(0x1A, response, this, "play", "Disconnect");
+        utils.writePacket(0x1B, response, this, "play", "Disconnect");
         
         this.tcpSocket.end();
     }

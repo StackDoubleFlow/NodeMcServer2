@@ -42,11 +42,19 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
     utils.writeInt(player.entityID, joinGame); //Entity ID
     utils.writeByte(1, joinGame); // Gamemode
     utils.writeInt(0, joinGame); // Dimention
+    utils.writeLong(0, joinGame); // First 8 bytes of the SHA-256 hash of the world's seed
     utils.writeByte(100, joinGame); // Max players
     utils.writeString("default", 16, joinGame); // Level type
     utils.writeVarInt(16, joinGame); // View distance
-    utils.writeByte(0, joinGame);
-    utils.writePacket(0x25, joinGame, player, "logn", "JoinGame");
+    utils.writeByte(0, joinGame); // Reduced debug info
+    utils.writeByte(1, joinGame); // Enable respawn screen
+    utils.writePacket(0x26, joinGame, player, "logn", "JoinGame");
+
+    const pluginMessage = utils.createBufferObject();
+    utils.writeString("minecraft:brand", 32767, pluginMessage);
+    utils.writeByteArray(Buffer.from("NodeMC"), pluginMessage, false);
+    utils.writePacket(0x19, joinGame, player, "logn", "PluginMessage");
+    
 
     player.state = "play";
     player.server.onPlayerConnected(player);
@@ -62,7 +70,7 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
     utils.writeFloat(player.location.pitch, playerPositionAndLook); // Pitch
     utils.writeByte(0, playerPositionAndLook);
     utils.writeVarInt(10121, playerPositionAndLook);
-    utils.writePacket(0x35, playerPositionAndLook, player, "play", "PlayerPositionAndLook");
+    utils.writePacket(0x36, playerPositionAndLook, player, "play", "PlayerPositionAndLook");
 
     
 
@@ -72,7 +80,7 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
     // Chunk data
     for(var x = -7; x < 7; x++) {
         for(var z = -7; z < 7; z++) {
-            utils.writePacket(0x21, player.server.world.getChunkPacket(x, z, true), player, "play", "ChunkData");
+            utils.writePacket(0x22, player.server.world.getChunkPacket(x, z, true), player, "play", "ChunkData");
         }
     }
 
@@ -80,7 +88,7 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
     var playerListHeaderAndFooter = utils.createBufferObject();
     utils.writeJson({ text: "MCNodeServer" }, 32767, playerListHeaderAndFooter);
     utils.writeJson({ "text": "Made by StackDoubleFlow & Allen" }, 32767, playerListHeaderAndFooter);
-    utils.writePacket(0x53, playerListHeaderAndFooter, player, "play", "PlayerListHeaderAndFooter");
+    utils.writePacket(0x54, playerListHeaderAndFooter, player, "play", "PlayerListHeaderAndFooter");
     
     https.get("https://sessionserver.mojang.com/session/minecraft/profile/" + player.unformattedUUID + "?unsigned=false", (res) => {
         let data = '';
@@ -139,7 +147,7 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
         utils.writeVarInt(player.ping, playerInfo); // Ping
         utils.writeByte(0, playerInfo); // Has display name (False)
     });
-    utils.writePacket(0x33, playerInfo, player, "play", "PlayerInfo");
+    utils.writePacket(0x34, playerInfo, player, "play", "PlayerInfo");
 
     var playerInfo = utils.createBufferObject();
     utils.writeVarInt(0, playerInfo); // Action (Add Player)
@@ -156,7 +164,7 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
     utils.writeVarInt(1, playerInfo); // Gamemode
     utils.writeVarInt(player.ping, playerInfo); // Ping
     utils.writeByte(0, playerInfo); // Has display name (False)
-    player.server.writePacketToAll(0x33, playerInfo, "play", "PlayerInfo", [player]);
+    player.server.writePacketToAll(0x34, playerInfo, "play", "PlayerInfo", [player]);
 
     const declareCommands = utils.createBufferObject();
     utils.writeVarInt(player.server.commandHandler.commands.size + 1, declareCommands); // Num of elements in array
@@ -169,7 +177,7 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
         utils.writeString(name, 32767, declareCommands); // Command name
     });
     utils.writeVarInt(0, declareCommands); // Root node index
-    utils.writePacket(0x11, declareCommands, player, "play", "DeclareCommands");
+    utils.writePacket(0x12, declareCommands, player, "play", "DeclareCommands");
     
 
     
@@ -183,10 +191,12 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
         utils.writeDouble(plr.location.z, spawnPlayer);
         utils.writeAngle(plr.location.yaw, spawnPlayer);
         utils.writeAngle(plr.location.pitch, spawnPlayer);
+        /*
         utils.writeByte(15, spawnPlayer); // Displayed Skin Parts
         utils.writeVarInt(0, spawnPlayer);
         utils.writeByte(plr.displayedSkinParts, spawnPlayer);
         utils.writeByte(0xFF, spawnPlayer); // End metadata
+        */
         utils.writePacket(0x05, spawnPlayer, player, "play", "SpawnPlayer");
     });
 
@@ -198,18 +208,20 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
     utils.writeDouble(player.location.z, spawnPlayer);
     utils.writeAngle(player.location.yaw, spawnPlayer);
     utils.writeAngle(player.location.pitch, spawnPlayer);
+    /*
     utils.writeByte(15, spawnPlayer); // Displayed Skin Parts
     utils.writeVarInt(0, spawnPlayer);
     utils.writeByte(0b01111111, spawnPlayer);
     utils.writeByte(0xFF, spawnPlayer); // End of metadata
+    */
     player.server.writePacketToAll(0x05, spawnPlayer, "play", "SpawnPlayer", [player]);
 
     
 }
 
 const version = {
-    name: "1.14",
-    version: 477,
+    name: "1.15.1",
+    version: 575,
     types: {
     },
     outboundPackets: {
@@ -461,6 +473,37 @@ const version = {
                 ],
                 auto: true
             },
+            0x12: {
+                name: "PlayerPositionAndLook",
+                parameters: [
+                    {
+                        name: "x",
+                        type: "double"
+                    },
+                    {
+                        name: "y",
+                        type: "double"
+                    },
+                    {
+                        name: "z",
+                        type: "double"
+                    },
+                    {
+                        name: "yaw",
+                        type: "float"
+                    },
+                    {
+                        name: "pitch",
+                        type: "float"
+                    },
+                    {
+                        name: "onGround",
+                        type: "boolean"
+                    }
+                ],
+                log: false,
+                auto: true
+            },
 
             // TODO
             0x00: placeholder("TeleportConfirm"),
@@ -477,7 +520,6 @@ const version = {
             0x0D: placeholder("QueryEntityNBT"),
             0x0E: placeholder("UseEntity"),
             0x10: placeholder("LockDifficulty"),
-            0x12: placeholder("PlayerPositionAndLook", false),
             0x14: placeholder("Player"),
             0x15: placeholder("VehicleMove"),
             0x16: placeholder("SteerBoat"),
@@ -531,8 +573,8 @@ const version = {
                 const response = utils.createBufferObject();
                 const responseData = {
                     "version": {
-                        "name": "NodeMC 1.14",
-                        "protocol": 477
+                        "name": "NodeMC " + version.name,
+                        "protocol": version.version
                     },
                     "players": {
                         "max": player.server.config['max_players'],
@@ -665,7 +707,7 @@ const version = {
                 utils.writeVarInt(1, playerInfo); // Number of players
                 utils.writeUUID(player, playerInfo) // UUID
                 utils.writeVarInt(player.ping, playerInfo);
-                player.server.writePacketToAll(0x33, playerInfo, "play", "PlayerInfo");
+                player.server.writePacketToAll(0x34, playerInfo, "play", "PlayerInfo");
             },
             /**
              * @param {Player} player
@@ -687,8 +729,8 @@ const version = {
                     utils.writeInt(1, blockBreakParticle);
                     utils.writeByte(0, blockBreakParticle);
 
-                    player.server.writePacketToAll(0x0B, blockBreak, "play", "BlockUpdate", [player]);
-                    player.server.writePacketToAll(0x22, blockBreakParticle, "play", "Effect", [player]);
+                    player.server.writePacketToAll(0x0C, blockBreak, "play", "BlockUpdate", [player]);
+                    player.server.writePacketToAll(0x23, blockBreakParticle, "play", "Effect", [player]);
                 }
                 
                 
@@ -714,7 +756,7 @@ const version = {
                 utils.writeShort(deltaY, entityRelativeMove);
                 utils.writeShort(deltaZ, entityRelativeMove);
                 utils.writeByte(player.onGround ? 1 : 0, entityRelativeMove);
-                player.server.writePacketToAll(0x28, entityRelativeMove, "play", "EntityRelativeMove", [player]);
+                player.server.writePacketToAll(0x29, entityRelativeMove, "play", "EntityRelativeMove", [player]);
             },
             /**
              * @param {Player} player
@@ -729,7 +771,7 @@ const version = {
                 utils.writeAngle(yaw, entityLook);
                 utils.writeAngle(pitch, entityLook);
                 utils.writeByte(onGround ? 1 : 0, entityLook);
-                player.server.writePacketToAll(0x2A, entityLook, "play", "EntityLook", [player]);
+                player.server.writePacketToAll(0x2B, entityLook, "play", "EntityLook", [player]);
             },
             /**
              * @param {Player} player
@@ -766,13 +808,14 @@ const version = {
                 const chatColors = utils.readBoolean(player);
                 player.displayedSkinParts = utils.readBytes(player, 1)[0];
                 const mainHand = utils.readVarInt(player);
+
                 const entityMetadata = utils.createBufferObject();
                 utils.writeVarInt(player.entityID, entityMetadata);
-                utils.writeByte(15, entityMetadata); // Displayed Skin Parts
+                utils.writeByte(16, entityMetadata); // Displayed Skin Parts
                 utils.writeVarInt(0, entityMetadata);
                 utils.writeByte(player.displayedSkinParts, entityMetadata);
                 utils.writeByte(0xff, entityMetadata); // End of metadata
-                player.server.writePacketToAll(0x43, entityMetadata, "play", "EntityMetadata"/*, [player]*/);
+                player.server.writePacketToAll(0x44, entityMetadata, "play", "EntityMetadata"/*, [player]*/);
             },
             /**
              * @param {Player} player
@@ -810,7 +853,40 @@ const version = {
                 utils.writeVarInt(1, entityMetadata);
                 utils.writeVarInt(player.getStatusMetaDataBitMask(), entityMetadata);
                 utils.writeByte(0xff, entityMetadata); // End of metadata
-                player.server.writePacketToAll(0x43, entityMetadata, "play", "EntityMetadata", [player]);
+                player.server.writePacketToAll(0x44, entityMetadata, "play", "EntityMetadata", [player]);
+            },
+            PlayerPositionAndLook: (player, dataLength, newX, newY, newZ, yaw, pitch, onGround) => {
+                const oldX = player.location.x;
+                const oldY = player.location.y;
+                const oldZ = player.location.z;
+
+                player.location.x = newX;
+                player.location.y = newY;
+                player.location.z = newZ;
+                player.location.yaw = yaw;
+                player.location.pitch = pitch;
+                player.onGround = onGround;
+
+                const deltaX = Math.round(((newX * 32) - (oldX * 32)) * 128);
+                const deltaY = Math.round(((newY * 32) - (oldY * 32)) * 128);
+                const deltaZ = Math.round(((newZ * 32) - (oldZ * 32)) * 128);
+                
+                const entityLookAndRelativeMove = utils.createBufferObject();
+                utils.writeVarInt(player.entityID, entityLookAndRelativeMove);
+                utils.writeShort(deltaX, entityLookAndRelativeMove);
+                utils.writeShort(deltaY, entityLookAndRelativeMove);
+                utils.writeShort(deltaZ, entityLookAndRelativeMove);
+                utils.writeAngle(yaw, entityLookAndRelativeMove);
+                utils.writeAngle(pitch, entityLookAndRelativeMove);
+                utils.writeByte(player.onGround ? 1 : 0, entityLookAndRelativeMove);
+                player.server.writePacketToAll(0x2A, entityLookAndRelativeMove, "play", "EntityLookAndRelativeMove", [player]);
+                
+                const entityLook = utils.createBufferObject();
+                utils.writeVarInt(player.entityID, entityLook);
+                utils.writeAngle(yaw, entityLook);
+                utils.writeAngle(pitch, entityLook);
+                utils.writeByte(player.onGround ? 1 : 0, entityLook);
+                player.server.writePacketToAll(0x2B, entityLook, "play", "EntityLook", [player]);
             },
 
 
@@ -828,7 +904,6 @@ const version = {
             UseEntity: () => { },
             EditBook: () => { },
             Player: () => { },
-            PlayerPositionAndLook: () => { },
             VehicleMove: () => { },
             SteerBoat: () => { },
             PickItem: () => { },
