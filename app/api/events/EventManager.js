@@ -1,6 +1,5 @@
 
-
-class EventManager {
+export default class EventManager {
   constructor(server) {
     this.listeners = {
       playerjoin: {
@@ -38,6 +37,13 @@ class EventManager {
     return canceled;
   }
 
+  /**
+   * @param {string} eventName
+   * @param {Function} handler
+   * @param {object} options
+   * @param {boolean} options.ignoreCanceled
+   * @param {("highest"|"high"|"normal"|"low"|"lowest"|"monitor")} options.priority
+   */
   on(plugin, eventName, handler, options={}) {
     eventName = eventName.toLowerCase();
     if (!this.listeners[eventName])
@@ -63,5 +69,3 @@ class EventManager {
     })
   }
 }
-
-module.exports = EventManager;

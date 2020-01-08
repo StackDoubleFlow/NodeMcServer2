@@ -1,6 +1,6 @@
-var utils = require('../utils.js');
+const utils = require('../utils.js');
 
-class Packet {
+export default class Packet {
   constructor(packetId, def) {
     this.packetId = packetId;
     this.def = def;
@@ -23,6 +23,3 @@ class Packet {
     return buffer;
   }
 }
-
-
-module.exports = Packet;

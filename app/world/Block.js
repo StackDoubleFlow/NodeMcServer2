@@ -1,7 +1,5 @@
-export class Block {
+export default class Block {
     constructor() {
 
     }
 }
-
-module.exports = Block;

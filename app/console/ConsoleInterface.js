@@ -1,7 +1,7 @@
 import { createInterface, Interface } from "readline";
 import MinecraftServer from "../MinecraftServer";
 
-class ConsoleInterface {
+export default class ConsoleInterface {
 
 	constructor(server) {
 		/**
@@ -20,24 +20,7 @@ class ConsoleInterface {
 		this.ci.prompt(true);
 
 		this.ci.on("line", ((input) => {
-			switch (input.trim()) {
-				case "": break;
-
-				case "stop": {
-					this.server.stop();
-					break;
-				}
-
-				case "help": {
-					console.log("CLI Commands: stop, help");
-
-					break;
-				}
-
-				default: {
-					console.log(`Invalid command: ${input}`);
-				}
-			}
+			server.commandHandler.runCommand(server, input)
 
 			this.ci.prompt();
 		}).bind(this));
@@ -49,5 +32,3 @@ class ConsoleInterface {
 		});
 	}
 }
-
-module.exports = ConsoleInterface;

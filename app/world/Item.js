@@ -1,4 +1,4 @@
-export class Item {
+export default class Item {
     /**
      * @param {string} id
      */
@@ -24,5 +24,3 @@ export class Item {
         Item.registry = obj;
     }
 }
-
-module.exports = Item;

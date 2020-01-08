@@ -4,11 +4,11 @@
 import { inflate } from 'zlib';
 import MinecraftServer from "./MinecraftServer";
 import PacketManager from "./packets/PacketManager"
+import Location from "./world/Location";
 
 var net = require('net');
 var utils = require('./utils');
 var crypto = require('crypto');
-const Location = require('./world/Location');
 
 export default class Player {
     /**

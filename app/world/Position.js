@@ -1,4 +1,4 @@
-class Position {
+export default class Position {
   
   /**
    * @param {number} x
@@ -45,5 +45,3 @@ class Position {
     this.z -= position.z;
   }
 }
-
-module.exports = Position;

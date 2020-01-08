@@ -213,7 +213,74 @@ module.exports = {
     },
     ChunkData: {
       id: 0x22,
-      parameters: []
+      parameters: [
+        {
+          name: "ChunkX",
+          type: "int"
+        },
+        {
+          name: "ChunkY",
+          type: "int"
+        },
+        {
+          name: "FullChunk",
+          type: "boolean",
+          values: {
+            "yes, this is a full chunk": true,
+            "no, this is indeed not a full chunk and therefore you do not need to expect a full chunk": false,
+          }
+        },
+        {
+          name: "PrimaryBitMask",
+          type: "varint"
+        },
+        {
+          name: "HeightMaps",
+          type: "nbt"
+        },
+        {
+          name: "Size",
+          type: "varint"
+        },
+        {
+          name: "Data",
+          type: {
+            parameters: [
+              {
+                name: "ChunkSection",
+                array: true,
+                lengthType: null,
+                type: {
+                  parameters: [
+                    {
+                      name: "BlockCount",
+                      type: "short"
+                    },
+                    {
+                      name: "BitsPerBlock",
+                      type: "byte"
+                    },
+                    {
+                      name: "Palette",
+                      type: "buffer"
+                    },
+                    {
+                      name: "DataArrayLength",
+                      type: "varint"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          name: "BlockEntities",
+          type: "nbt",
+          array: true,
+          lengthType: "varint"
+        }
+      ]
     },
     Effect: {
       id: 0x23,
@@ -256,6 +323,26 @@ module.exports = {
             overworld: 0,
             end: 1
           }
+        },
+        {
+          name: "HashedSeed",
+          type: "long"
+        },
+        {
+          name: "MaxPlayers",
+          type: "byte"
+        },
+        {
+          name: "LevelType",
+          type: "string"
+        },
+        {
+          name: "ReducedDebugInfo",
+          type: "boolean"
+        },
+        {
+          name: "EnableRespawnScreen",
+          type: "boolean"
         }
       ]
     },

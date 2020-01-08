@@ -40,6 +40,7 @@ export const types = {
         nbt: writeNbt,
         short: writeShort,
         uuid: writeUUID,
+        buffer: appendData,
         null: () => {},
         [null]: () => {}
     }
@@ -199,7 +200,8 @@ export function writeParameter(def, bufferObj, value) {
     let isArray = def.array;
 
     if (isArray) {
-        writeType(def.lengthType, bufferObj, value.length);
+        if(def.lengthType)
+            writeType(def.lengthType, bufferObj, value.length);
     
         for(let i = 0; i < value.length; i++) {
             if(def.parameters) {

@@ -1,7 +1,7 @@
-const World = require('./World.js');
-const Position = require('./Position.js');
+import World from "./World";
+import Position from "./Position";
 
-class Location extends Position {
+export default class Location extends Position {
   
   /**
    * @param {World} world
@@ -60,5 +60,3 @@ class Location extends Position {
     this.pitch -= location.pitch;
   }
 }
-
-module.exports = Location;

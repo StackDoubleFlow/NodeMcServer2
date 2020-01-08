@@ -9,7 +9,7 @@ var zlib = require('zlib');
  * 
  */
 
-class World {
+export default class World {
     /**
      * Loads a world
      * 
@@ -138,5 +138,3 @@ class World {
     }
 
 }
-
-module.exports = World;

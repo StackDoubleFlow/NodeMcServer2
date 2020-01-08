@@ -1,16 +1,17 @@
 import Player from "./Player";
+import World from "./world/World";
+import ConsoleInterface from "./console/ConsoleInterface";
+import CommandHandler from "./api/commands/CommandHandler";
+import Item from "./world/Item";
+import EventManager from "./api/events/EventManager";
 
 var net = require('net');
 var fs = require('fs');
 var crypto = require('crypto');
-var World = require('./world/World');
 var utils = require('./utils');
 var path = require('path');
-const ConsoleInterface = require("./console/ConsoleInterface.js");
-const Item = require("./world/Item");
-const CommandHandler = require("./api/commands/CommandHandler").default;
 
-class MinecraftServer {
+export default class MinecraftServer {
 
     /**
      * Initializes a minecraft server
@@ -235,6 +236,7 @@ class MinecraftServer {
             });
         });
 
+        this.eventManager = new EventManager();
         this.username = "CONSOLE";
         this.uuid = null;
         this.lastTick = 0;
@@ -480,5 +482,3 @@ class MinecraftServer {
         process.exit();
     }
 }
-
-module.exports = MinecraftServer;

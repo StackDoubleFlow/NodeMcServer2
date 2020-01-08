@@ -1,7 +1,11 @@
+import Plugin from "./app/api/plugins/Plugin";
+
 module.exports = {
     api: {
         commands: {},
-        plugins: {},
+        plugins: {
+            Plugin
+        },
         events: {}
     },
     world: {

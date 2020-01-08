@@ -6,7 +6,7 @@ var utils = require('./../utils');
 /**
  * Manages all packets
  */
-class PacketManager {
+export default class PacketManager {
 
 
     /**
