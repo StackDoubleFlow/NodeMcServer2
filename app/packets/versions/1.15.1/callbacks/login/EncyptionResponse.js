@@ -22,26 +22,26 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
     var UUID = `${unformattedUUID.substr(0, 8)}-${unformattedUUID.substr(8, 4)}-${unformattedUUID.substr(12, 4)}-${unformattedUUID.substr(16, 4)}-${unformattedUUID.substr(20, 12)}`;
     player.UUID = UUID;
     var loginSuccess = utils.createBufferObject();
-    utils.writeString(player.UUID, 36, loginSuccess);
-    utils.writeString(player.username, 16, loginSuccess);
+    utils.writeString(loginSuccess, player.UUID, 36);
+    utils.writeString(loginSuccess, player.username, 16);
     utils.writePacket(0x02, loginSuccess, player, "logn", "LoginSuccess");
     player.entityID = crypto.randomBytes(2).readUIntBE(0, 2);
 
     var joinGame = utils.createBufferObject();
-    utils.writeInt(player.entityID, joinGame); //Entity ID
-    utils.writeByte(1, joinGame); // Gamemode
-    utils.writeInt(0, joinGame); // Dimention
-    utils.writeLong(0, joinGame); // First 8 bytes of the SHA-256 hash of the world's seed
-    utils.writeByte(100, joinGame); // Max players
-    utils.writeString("default", 16, joinGame); // Level type
-    utils.writeVarInt(16, joinGame); // View distance
-    utils.writeByte(0, joinGame); // Reduced debug info
-    utils.writeByte(1, joinGame); // Enable respawn screen
+    utils.writeInt(joinGame, player.entityID); //Entity ID
+    utils.writeByte(joinGame, 1); // Gamemode
+    utils.writeInt(joinGame, 0); // Dimention
+    utils.writeLong(joinGame, 0); // First 8 bytes of the SHA-256 hash of the world's seed
+    utils.writeByte(joinGame, 100); // Max players
+    utils.writeString(joinGame, "default", 16); // Level type
+    utils.writeVarInt(joinGame, 16); // View distance
+    utils.writeByte(joinGame, 0); // Reduced debug info
+    utils.writeByte(joinGame, 1); // Enable respawn screen
     utils.writePacket(0x26, joinGame, player, "logn", "JoinGame");
 
     const pluginMessage = utils.createBufferObject();
-    utils.writeString("minecraft:brand", 32767, pluginMessage);
-    utils.writeByteArray(Buffer.from("NodeMC"), pluginMessage, false);
+    utils.writeString(pluginMessage, "minecraft:brand", 32767);
+    utils.writeByteArray(pluginMessage, Buffer.from("NodeMC"), false);
     utils.writePacket(0x19, joinGame, player, "logn", "PluginMessage");
     
 
@@ -52,13 +52,13 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
 
     var playerPositionAndLook = utils.createBufferObject();
     // Quick 0 position test
-    utils.writeDouble(player.location.x, playerPositionAndLook); // X
-    utils.writeDouble(player.location.y, playerPositionAndLook); // Y
-    utils.writeDouble(player.location.z, playerPositionAndLook); // Z
-    utils.writeFloat(player.location.yaw, playerPositionAndLook); // Yaw
-    utils.writeFloat(player.location.pitch, playerPositionAndLook); // Pitch
-    utils.writeByte(0, playerPositionAndLook);
-    utils.writeVarInt(10121, playerPositionAndLook);
+    utils.writeDouble(playerPositionAndLook, player.location.x); // X
+    utils.writeDouble(playerPositionAndLook, player.location.y); // Y
+    utils.writeDouble(playerPositionAndLook, player.location.z); // Z
+    utils.writeFloat(playerPositionAndLook, player.location.yaw); // Yaw
+    utils.writeFloat(playerPositionAndLook, player.location.pitch); // Pitch
+    utils.writeByte(playerPositionAndLook, 0);
+    utils.writeVarInt(playerPositionAndLook, 10121);
     utils.writePacket(0x36, playerPositionAndLook, player, "play", "PlayerPositionAndLook");
 
     
@@ -75,8 +75,8 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
 
     // Tab Player List
     var playerListHeaderAndFooter = utils.createBufferObject();
-    utils.writeJson({ text: "MCNodeServer" }, 32767, playerListHeaderAndFooter);
-    utils.writeJson({ "text": "Made by StackDoubleFlow & Allen" }, 32767, playerListHeaderAndFooter);
+    utils.writeJson(playerListHeaderAndFooter, { text: "MCNodeServer" }, 32767);
+    utils.writeJson(playerListHeaderAndFooter, { "text": "Made by StackDoubleFlow & Allen" }, 32767);
     utils.writePacket(0x54, playerListHeaderAndFooter, player, "play", "PlayerListHeaderAndFooter");
     
     https.get("https://sessionserver.mojang.com/session/minecraft/profile/" + player.unformattedUUID + "?unsigned=false", (res) => {
@@ -119,53 +119,53 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
     }
     
     var playerInfo = utils.createBufferObject();
-    utils.writeVarInt(0, playerInfo); // Action (Add Player)
-    utils.writeVarInt(player.server.onlinePlayers.length, playerInfo); // Number of players
+    utils.writeVarInt(playerInfo, 0); // Action (Add Player)
+    utils.writeVarInt(playerInfo, player.server.onlinePlayers.length); // Number of players
     player.server.onlinePlayers.forEach(plr => {
-        utils.writeUUID(plr, playerInfo); // UUID
-        utils.writeString(plr.username, 16, playerInfo); /// Username
-        utils.writeVarInt(plr.properties.length, playerInfo); // Number of properties
+        utils.writeUUID(playerInfo, plr); // UUID
+        utils.writeString(playerInfo, plr.username, 16); /// Username
+        utils.writeVarInt(playerInfo, plr.properties.length); // Number of properties
         plr.properties.forEach((property) => {
             //console.log(property);
-            utils.writeString(property.name, 32767, playerInfo); // Property name
-            utils.writeString(property.value, 32767, playerInfo); // Property value
-            utils.writeByte(1, playerInfo); // Is Property Signed (True)
-            utils.writeString(property.signature, 32767, playerInfo); // Yggdrasil's signature
+            utils.writeString(playerInfo, property.name, 32767); // Property name
+            utils.writeString(playerInfo, property.value, 32767); // Property value
+            utils.writeByte(playerInfo, 1); // Is Property Signed (True)
+            utils.writeString(playerInfo, property.signature, 32767); // Yggdrasil's signature
         });
-        utils.writeVarInt(1, playerInfo); // Gamemode
-        utils.writeVarInt(player.ping, playerInfo); // Ping
-        utils.writeByte(0, playerInfo); // Has display name (False)
+        utils.writeVarInt(playerInfo, 1); // Gamemode
+        utils.writeVarInt(playerInfo, player.ping); // Ping
+        utils.writeByte(playerInfo, 0); // Has display name (False)
     });
     utils.writePacket(0x34, playerInfo, player, "play", "PlayerInfo");
 
     var playerInfo = utils.createBufferObject();
-    utils.writeVarInt(0, playerInfo); // Action (Add Player)
-    utils.writeVarInt(1, playerInfo); // Number of players
-    utils.writeUUID(player, playerInfo) // UUID
-    utils.writeString(player.username, 16, playerInfo); /// Username
-    utils.writeVarInt(player.properties.length, playerInfo); // Number of properties
+    utils.writeVarInt(playerInfo, 0); // Action (Add Player)
+    utils.writeVarInt(playerInfo, 1); // Number of players
+    utils.writeUUID(playerInfo, player) // UUID
+    utils.writeString(playerInfo, player.username, 16); /// Username
+    utils.writeVarInt(playerInfo, player.properties.length); // Number of properties
     player.properties.forEach((property) => {
-        utils.writeString(property.name, 32767, playerInfo); // Property name
-        utils.writeString(property.value, 32767, playerInfo); // Property value
-        utils.writeByte(1, playerInfo); // Is Property Signed (True)
-        utils.writeString(property.signature, 32767, playerInfo); // Yggdrasil's signature
+        utils.writeString(playerInfo, property.name, 32767); // Property name
+        utils.writeString(playerInfo, property.value, 32767); // Property value
+        utils.writeByte(playerInfo, 1); // Is Property Signed (True)
+        utils.writeString(playerInfo, property.signature, 32767); // Yggdrasil's signature
     });
-    utils.writeVarInt(1, playerInfo); // Gamemode
-    utils.writeVarInt(player.ping, playerInfo); // Ping
-    utils.writeByte(0, playerInfo); // Has display name (False)
+    utils.writeVarInt(playerInfo, 1); // Gamemode
+    utils.writeVarInt(playerInfo, player.ping); // Ping
+    utils.writeByte(playerInfo, 0); // Has display name (False)
     player.server.writePacketToAll(0x34, playerInfo, "play", "PlayerInfo", [player]);
 
     const declareCommands = utils.createBufferObject();
-    utils.writeVarInt(player.server.commandHandler.commands.size + 1, declareCommands); // Num of elements in array
-    utils.writeByte(0, declareCommands); // Flags (root)
-    utils.writeVarInt(player.server.commandHandler.commands.size, declareCommands); // Num of children
-    for(let i = 1; i <= player.server.commandHandler.commands.size; i++) utils.writeVarInt(i, declareCommands);
+    utils.writeVarInt(declareCommands, player.server.commandHandler.commands.size + 1); // Num of elements in array
+    utils.writeByte(declareCommands, 0); // Flags (root)
+    utils.writeVarInt(declareCommands, player.server.commandHandler.commands.size); // Num of children
+    for(let i = 1; i <= player.server.commandHandler.commands.size; i++) utils.writeVarInt(declareCommands, i);
     player.server.commandHandler.commands.forEach((command, name) => {
-        utils.writeByte(0x5, declareCommands); // Flags (literal, executable)
-        utils.writeVarInt(0, declareCommands); // Num of children
-        utils.writeString(name, 32767, declareCommands); // Command name
+        utils.writeByte(declareCommands, 0x5); // Flags (literal, executable)
+        utils.writeVarInt(declareCommands, 0); // Num of children
+        utils.writeString(declareCommands, name, 32767); // Command name
     });
-    utils.writeVarInt(0, declareCommands); // Root node index
+    utils.writeVarInt(declareCommands, 0); // Root node index
     utils.writePacket(0x12, declareCommands, player, "play", "DeclareCommands");
     
 
@@ -173,13 +173,13 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
     player.server.onlinePlayers.forEach((plr) => {
         if(plr === player) return;
         var spawnPlayer = utils.createBufferObject();
-        utils.writeVarInt(plr.entityID, spawnPlayer);
-        utils.writeUUID(plr, spawnPlayer);
-        utils.writeDouble(plr.location.x, spawnPlayer);
-        utils.writeDouble(plr.location.y, spawnPlayer);
-        utils.writeDouble(plr.location.z, spawnPlayer);
-        utils.writeAngle(plr.location.yaw, spawnPlayer);
-        utils.writeAngle(plr.location.pitch, spawnPlayer);
+        utils.writeVarInt(spawnPlayer, plr.entityID);
+        utils.writeUUID(spawnPlayer, plr);
+        utils.writeDouble(spawnPlayer, plr.location.x);
+        utils.writeDouble(spawnPlayer, plr.location.y);
+        utils.writeDouble(spawnPlayer, plr.location.z);
+        utils.writeAngle(spawnPlayer, plr.location.yaw);
+        utils.writeAngle(spawnPlayer, plr.location.pitch);
         /*
         utils.writeByte(15, spawnPlayer); // Displayed Skin Parts
         utils.writeVarInt(0, spawnPlayer);
@@ -190,18 +190,18 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
     });
 
     var spawnPlayer = utils.createBufferObject();
-    utils.writeVarInt(player.entityID, spawnPlayer);
-    utils.writeUUID(player, spawnPlayer);
-    utils.writeDouble(player.location.x, spawnPlayer);
-    utils.writeDouble(player.location.y, spawnPlayer);
-    utils.writeDouble(player.location.z, spawnPlayer);
-    utils.writeAngle(player.location.yaw, spawnPlayer);
-    utils.writeAngle(player.location.pitch, spawnPlayer);
+    utils.writeVarInt(spawnPlayer, player.entityID);
+    utils.writeUUID(spawnPlayer, player);
+    utils.writeDouble(spawnPlayer, player.location.x);
+    utils.writeDouble(spawnPlayer, player.location.y);
+    utils.writeDouble(spawnPlayer, player.location.z);
+    utils.writeAngle(spawnPlayer, player.location.yaw);
+    utils.writeAngle(spawnPlayer, player.location.pitch);
     /*
-    utils.writeByte(15, spawnPlayer); // Displayed Skin Parts
-    utils.writeVarInt(0, spawnPlayer);
-    utils.writeByte(0b01111111, spawnPlayer);
-    utils.writeByte(0xFF, spawnPlayer); // End of metadata
+    utils.writeByte(spawnPlayer, 15); // Displayed Skin Parts
+    utils.writeVarInt(spawnPlayer, 0);
+    utils.writeByte(spawnPlayer, 0b01111111);
+    utils.writeByte(spawnPlayer, 0xFF); // End of metadata
     */
     player.server.writePacketToAll(0x05, spawnPlayer, "play", "SpawnPlayer", [player]);
 
@@ -242,7 +242,7 @@ module.exports = (player, dataLength) => {
   player.tcpSocket.pipe(player.decipher);
   player.decipher.on('readable', player.onDecipherReadable.bind(player));
   const setCompression = utils.createBufferObject();
-  utils.writeVarInt(500, setCompression);
+  utils.writeVarInt(setCompression, 500);
   utils.writePacket(0x03, setCompression, player, "logn", "SetCompression");
   player.usePacketCompression = true;
   https.get("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=" + player.username + "&serverId=" + serverHash, (res) => {

@@ -32,11 +32,17 @@ class PacketManager {
 
         const versionInfo = require(`./versions/${version}`);
         /**
-         * Packet types
+         * Incoming packet types
          * 
          * @type {Object<string, Object<number, Object<String, any>>>}
          */
         this.inboundPackets = versionInfo.inboundPackets;
+        /**
+         * Outgoing packet types
+         * 
+         * @type {Object<string, Object<number, Object<String, any>>>}
+         */
+        this.outboundPackets = versionInfo.outboundPackets;
 
         /**
          * Packet callbacks

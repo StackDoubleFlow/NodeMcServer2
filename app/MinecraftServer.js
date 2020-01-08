@@ -26,7 +26,7 @@ class MinecraftServer {
 
         this.sendMessage("Loading config");
 
-        this.config = JSON.parse(fs.readFileSync(__dirname + "/../config.json").toString('utf-8'));
+        this.config = JSON.parse(fs.readFileSync(__dirname + "/../server_data/config.json").toString('utf-8'));
         if(!this.config) console.error("Unable to find config file");
 
         this.sendMessage("Loading icon(s)");
@@ -106,6 +106,39 @@ class MinecraftServer {
         });
         this.commandHandler.addCommand(this, {name: "eval"}, (context) => {
             context.sender.sendMessage("" + eval(context.argString));
+        });
+        this.commandHandler.addCommand(this, {name: "title"}, (context) => {
+            const title = utils.createBufferObject();
+            utils.writeVarInt(title, 0);
+            utils.writeJson(title, {
+                text: context.argString
+            }, 37000);
+            this.writePacketToAll(0x50, title, "play", "TItle");
+        });
+        this.commandHandler.addCommand(this, {name: "gamemode", aliases: ["gm", "gmc", "gms", "gmsp", "gma"]}, (context) => {
+            if(!context.isSenderPlayer()) return;
+
+            let gamemode = context.args[0];
+
+            if (["gmc", "gms", "gmsp", "gma"].includes(context.label.toLowerCase()))
+                gamemode = context.label.substr(2);
+
+            if(!gamemode) {
+                context.sender.sendMessage({
+                    text: "What gamemode?",
+                    color: "red"
+                })
+                return;
+            }
+
+            try {
+                context.sender.setGamemode(gamemode)
+            } catch(e) {
+                context.sender.sendMessage({
+                    text: e.message,
+                    color: "red"
+                })
+            }
         });
         this.commandHandler.addCommand(this, {name: "kick"}, (context) => {
             if (context.args.length === 0) {
@@ -252,7 +285,7 @@ class MinecraftServer {
     sendKeepAlive() {
         var keepAlive = utils.createBufferObject();
         this.timeOfLastKeepAlive = new Date().getTime();
-        utils.writeLong(this.timeOfLastKeepAlive, keepAlive);
+        utils.writeLong(keepAlive, this.timeOfLastKeepAlive);
         this.writePacketToAll(0x21, keepAlive, "play", "KeepAlive");
     }
 
@@ -277,24 +310,37 @@ class MinecraftServer {
             text: "",
             extra: [
                 {
-                    text: "[",
-                    color: "dark_gray",
-                    bold: true
-                },
-                {
-                    text: "+",
-                    color: "dark_green"
-                },
-                {
-                    text: "] ",
-                    color: "dark_gray",
-                    bold: true
+                    text: "",
+                    extra: [
+                        {
+                            text: "[",
+                            color: "dark_gray",
+                            bold: true
+                        },
+                        {
+                            text: "+",
+                            color: "dark_green"
+                        },
+                        {
+                            text: "] ",
+                            color: "dark_gray",
+                            bold: true
+                        },
+                    ],
+                    "hoverEvent": {
+                        "action": "show_text",
+                        "value": {
+                            text: "Joined",
+                            color: "green"
+                        }
+                    }
                 },
                 player.chatName("gray")
             ]
         });
         this.sendKeepAlive();
-        
+
+        this.sendMessage("[Joined] " + player.username);   
     }
 
     /**
@@ -313,29 +359,47 @@ class MinecraftServer {
             text: "",
             extra: [
                 {
-                    text: "[",
-                    color: "dark_gray",
-                    bold: true
-                },
-                {
-                    text: "-",
-                    color: "dark_red"
-                },
-                {
-                    text: "] ",
-                    color: "dark_gray",
-                    bold: true
+                    text: "",
+                    extra: [
+                        {
+                            text: "[",
+                            color: "dark_gray",
+                            bold: true
+                        },
+                        {
+                            text: "-",
+                            color: "dark_red"
+                        },
+                        {
+                            text: "] ",
+                            color: "dark_gray",
+                            bold: true
+                        }
+                    ],
+                    "hoverEvent": {
+                        "action": "show_text",
+                        "value": {
+                            text: "Left",
+                            color: "red"
+                        }
+                    }
                 },
                 player.chatName("gray")
             ]
         }, 1);
 
         var playerInfo = utils.createBufferObject();
-        utils.writeVarInt(4, playerInfo); // Action (Remove Player)
-        utils.writeVarInt(1, playerInfo); // Number of players
-        utils.writeUUID(player, playerInfo) // UUID
-        this.writePacketToAll(0x34, playerInfo, "play", "PlayerInfo");
+        utils.writeVarInt(playerInfo, 4); // Action (Remove Player)
+        utils.writeVarInt(playerInfo, 1); // Number of players
+        utils.writeUUID(playerInfo, player) // UUID
+        this.writePacketToAll(playerInfo, 0x34, "play", "PlayerInfo");
 
+        var removeEntities = utils.createBufferObject();
+        utils.writeVarInt(removeEntities, 1); // Number of entities
+        utils.writeVarInt(removeEntities, player.entityID)
+        this.writePacketToAll(0x38, removeEntities, "play", "DestroyEntities");
+
+        this.sendMessage("[Left] " + player.username);
     }
 
     /**
@@ -360,12 +424,12 @@ class MinecraftServer {
      * The state of the packet used for logging
      * @param {string} name
      * The name of the packet used for logging
-     * @param {Array<Player>} exeptions
+     * @param {Array<Player>} exceptions
      * Players to not send the packet to
      */
-    writePacketToAll(packetID, data, state, name, exeptions=[]) {
+    writePacketToAll(packetID, data, state, name, exceptions=[]) {
         for(let player of this.onlinePlayers) {
-            if(exeptions.includes(player)) continue;
+            if(exceptions.includes(player)) continue;
             try {
                 utils.writePacket(packetID, data, player, state, name);
             } catch(e) {
@@ -373,17 +437,31 @@ class MinecraftServer {
             }
         }
     }
+
+    sendPacketToAll(name, exceptions, ...args) {
+        for(let player of this.onlinePlayers) {
+            if(exceptions.includes(player)) continue;
+            try {
+                player.sendPacket(name, ...args);
+            } catch(e) {
+                console.error(e.message, e.stack);
+            }
+        }
+    }
     
     broadcast(message, type=1) {
-        if (typeof message === "string")
+        if (typeof message === "string") {
             message = { "text": message };
+        }
+
+        this.sendPacketToAll("ChatMessage", [], message, type);
         
-        const response = utils.createBufferObject();
+        // const response = utils.createBufferObject();
 
-        utils.writeJson(message, 32767, response);
-        utils.writeByte(type, response);
+        // utils.writeJson(message, 32767, response);
+        // utils.writeByte(type, response);
 
-        this.writePacketToAll(0x0F, response, "play", "ChatMessage");
+        // this.writePacketToAll(0x0F, response, "play", "ChatMessage");
     }
 
     stop() {

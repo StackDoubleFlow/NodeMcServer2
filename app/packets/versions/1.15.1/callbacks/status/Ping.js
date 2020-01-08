@@ -9,6 +9,6 @@ const utils = require("../../../../../utils");
 module.exports = (player, dataLength) => {
   const payload = utils.readLong(player);
   const pong = utils.createBufferObject();
-  utils.writeLong(payload, pong);
+  utils.writeLong(pong, payload);
   utils.writePacket(0x01, pong, player, "stat", "Pong");
 };

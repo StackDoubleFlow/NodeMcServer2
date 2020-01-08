@@ -18,10 +18,10 @@ module.exports = (player, dataLength) => {
   const deltaZ = Math.round(((newZ * 32) - (oldZ * 32)) * 128);
   player.onGround = utils.readBoolean(player);
   const entityRelativeMove = utils.createBufferObject();
-  utils.writeVarInt(player.entityID, entityRelativeMove);
-  utils.writeShort(deltaX, entityRelativeMove);
-  utils.writeShort(deltaY, entityRelativeMove);
-  utils.writeShort(deltaZ, entityRelativeMove);
-  utils.writeByte(player.onGround ? 1 : 0, entityRelativeMove);
+  utils.writeVarInt(entityRelativeMove, player.entityID);
+  utils.writeShort(entityRelativeMove, deltaX);
+  utils.writeShort(entityRelativeMove, deltaY);
+  utils.writeShort(entityRelativeMove, deltaZ);
+  utils.writeByte(entityRelativeMove, player.onGround ? 1 : 0);
   player.server.writePacketToAll(0x29, entityRelativeMove, "play", "EntityRelativeMove", [player]);
 };

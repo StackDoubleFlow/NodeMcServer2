@@ -1,8 +1,8 @@
 {
     "motd": "Test motd",
     "port": 25570,
-    "icon_file": "icons",
+    "icon_file": "server_data/icons",
     "max_players": 100,
-    "world_file": "world.nodemc",
+    "world_file": "server_data/worlds/world.nodemc",
     "offline_mode": true
 }

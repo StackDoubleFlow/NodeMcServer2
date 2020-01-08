@@ -23,17 +23,17 @@ module.exports = (player, dataLength, newX, newY, newZ, yaw, pitch, onGround) =>
   const deltaZ = Math.round(((newZ * 32) - (oldZ * 32)) * 128);
   
   const entityLookAndRelativeMove = utils.createBufferObject();
-  utils.writeVarInt(player.entityID, entityLookAndRelativeMove);
-  utils.writeShort(deltaX, entityLookAndRelativeMove);
-  utils.writeShort(deltaY, entityLookAndRelativeMove);
-  utils.writeShort(deltaZ, entityLookAndRelativeMove);
-  utils.writeAngle(yaw, entityLookAndRelativeMove);
-  utils.writeAngle(pitch, entityLookAndRelativeMove);
-  utils.writeByte(player.onGround ? 1 : 0, entityLookAndRelativeMove);
+  utils.writeVarInt(entityLookAndRelativeMove, player.entityID);
+  utils.writeShort(entityLookAndRelativeMove, deltaX);
+  utils.writeShort(entityLookAndRelativeMove, deltaY);
+  utils.writeShort(entityLookAndRelativeMove, deltaZ);
+  utils.writeAngle(entityLookAndRelativeMove, yaw);
+  utils.writeAngle(entityLookAndRelativeMove, pitch);
+  utils.writeByte(entityLookAndRelativeMove, player.onGround ? 1 : 0);
   player.server.writePacketToAll(0x2A, entityLookAndRelativeMove, "play", "EntityLookAndRelativeMove", [player]);
 
   const entityHeadLook = utils.createBufferObject();
-  utils.writeVarInt(player.entityID, entityHeadLook);
-  utils.writeAngle(yaw, entityHeadLook);
+  utils.writeVarInt(entityHeadLook, player.entityID);
+  utils.writeAngle(entityHeadLook, yaw);
   player.server.writePacketToAll(0x3C, entityHeadLook, "play", "EntityHeadLook", [player]);
 };

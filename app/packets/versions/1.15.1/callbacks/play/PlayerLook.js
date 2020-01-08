@@ -11,14 +11,14 @@ module.exports = (player, dataLength) => {
   const pitch = player.location.pitch = utils.readFloat(player);
   const onGround = player.onGround = utils.readBoolean(player);
   const entityLook = utils.createBufferObject();
-  utils.writeVarInt(player.entityID, entityLook);
-  utils.writeAngle(yaw, entityLook);
-  utils.writeAngle(pitch, entityLook);
-  utils.writeByte(onGround ? 1 : 0, entityLook);
+  utils.writeVarInt(entityLook, player.entityID);
+  utils.writeAngle(entityLook, yaw);
+  utils.writeAngle(entityLook, pitch);
+  utils.writeByte(entityLook, onGround ? 1 : 0);
   player.server.writePacketToAll(0x2B, entityLook, "play", "EntityLook", [player]);
 
   const entityHeadLook = utils.createBufferObject();
-  utils.writeVarInt(player.entityID, entityHeadLook);
-  utils.writeAngle(yaw, entityHeadLook);
+  utils.writeVarInt(entityHeadLook, player.entityID);
+  utils.writeAngle(entityHeadLook, yaw);
   player.server.writePacketToAll(0x3C, entityHeadLook, "play", "EntityHeadLook", [player]);
 };

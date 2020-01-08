@@ -13,14 +13,14 @@ module.exports = (player, dataLength) => {
 
   if(status === 0) {
       const blockBreak = utils.createBufferObject();
-      utils.writePosition(pos, blockBreak);
-      utils.writeVarInt(0, blockBreak);
+      utils.writePosition(blockBreak, pos);
+      utils.writeVarInt(blockBreak, 0);
 
       const blockBreakParticle = utils.createBufferObject();
-      utils.writeInt(2001, blockBreakParticle);
-      utils.writePosition(pos, blockBreakParticle);
-      utils.writeInt(1, blockBreakParticle);
-      utils.writeByte(0, blockBreakParticle);
+      utils.writeInt(blockBreakParticle, 2001);
+      utils.writePosition(blockBreakParticle, pos);
+      utils.writeInt(blockBreakParticle, 1);
+      utils.writeByte(blockBreakParticle, 0);
 
       player.server.writePacketToAll(0x0C, blockBreak, "play", "BlockUpdate", [player]);
       player.server.writePacketToAll(0x23, blockBreakParticle, "play", "Effect", [player]);

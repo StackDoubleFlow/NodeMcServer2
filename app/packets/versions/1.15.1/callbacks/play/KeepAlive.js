@@ -11,9 +11,9 @@ module.exports = (player, dataLength) => {
   const timeSinceLastKeepAlive = new Date().getTime() - player.server.timeOfLastKeepAlive;
   player.ping = timeSinceLastKeepAlive;
   const playerInfo = utils.createBufferObject();
-  utils.writeVarInt(2, playerInfo); // Action (Update Latency)
-  utils.writeVarInt(1, playerInfo); // Number of players
-  utils.writeUUID(player, playerInfo) // UUID
-  utils.writeVarInt(player.ping, playerInfo);
+  utils.writeVarInt(playerInfo, 2); // Action (Update Latency)
+  utils.writeVarInt(playerInfo, 1); // Number of players
+  utils.writeUUID(playerInfo, player) // UUID
+  utils.writeVarInt(playerInfo, player.ping);
   player.server.writePacketToAll(0x34, playerInfo, "play", "PlayerInfo");
 };

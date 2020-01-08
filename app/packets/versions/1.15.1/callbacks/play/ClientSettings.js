@@ -15,10 +15,10 @@ module.exports = (player, dataLength) => {
   const mainHand = utils.readVarInt(player);
 
   const entityMetadata = utils.createBufferObject();
-  utils.writeVarInt(player.entityID, entityMetadata);
-  utils.writeByte(16, entityMetadata); // Displayed Skin Parts
-  utils.writeVarInt(0, entityMetadata);
-  utils.writeByte(player.displayedSkinParts, entityMetadata);
-  utils.writeByte(0xff, entityMetadata); // End of metadata
+  utils.writeVarInt(entityMetadata, player.entityID);
+  utils.writeByte(entityMetadata, 16); // Displayed Skin Parts
+  utils.writeVarInt(entityMetadata, 0);
+  utils.writeByte(entityMetadata, player.displayedSkinParts);
+  utils.writeByte(entityMetadata, 0xff); // End of metadata
   player.server.writePacketToAll(0x44, entityMetadata, "play", "EntityMetadata"/*, [player]*/);
 };

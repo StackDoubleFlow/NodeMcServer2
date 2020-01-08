@@ -3,10 +3,10 @@
 
 import { inflate } from 'zlib';
 import MinecraftServer from "./MinecraftServer";
+import PacketManager from "./packets/PacketManager"
 
 var net = require('net');
 var utils = require('./utils');
-var PacketManager = require('./packets/PacketManager');
 var crypto = require('crypto');
 const Location = require('./world/Location');
 
@@ -117,10 +117,40 @@ export default class Player {
         this.displayedSkinParts = 0;
         this.isSneaking = false;
         this.isSprinting = false;
+        this.gamemode = "creative";
 
         this.tcpSocket.on('readable', this.onStreamReadable.bind(this));
         this.tcpSocket.on('end', this.onStreamEnd.bind(this));
         this.tcpSocket.on('error', this.onStreamEnd.bind(this));
+    }
+
+    setGamemode(gamemode) {
+        const gamemodes = {
+            0: 0,
+            "s": 0,
+            "survival": 0,
+            1: 1,
+            "c": 1,
+            "creative": 1,
+            2: 2,
+            "a": 2,
+            "adventure": 2,
+            3: 3,
+            "sp": 3,
+            "spectator": 3
+        }
+
+        gamemode = gamemodes[gamemode];
+
+        if(gamemode === undefined)
+            throw new Error("Invalid gamemode");
+
+        this.gamemode = ["survival", "creative", "adventure", "spectator"][gamemode];
+
+        const changeGameState = utils.createBufferObject();
+        utils.writeByte(changeGameState, 3);
+        utils.writeFloat(changeGameState, gamemode);
+        utils.writePacket(0x1F, changeGameState, this, "play", "ChangeGameState");
     }
 
     getStatusMetaDataBitMask() {
@@ -232,8 +262,8 @@ export default class Player {
             message = { "text": message };
         
         const response = utils.createBufferObject();
-        utils.writeJson(message, 32767, response);
-        utils.writeByte(type, response);
+        utils.writeJson(response, message, 32767);
+        utils.writeByte(response, type);
         utils.writePacket(0x0F, response, this, "play", "ChatMessage");
     }
 
@@ -243,10 +273,24 @@ export default class Player {
             reason = { "text": reason };
         
         const response = utils.createBufferObject();
-        utils.writeJson(reason, 32767, response);
+        utils.writeJson(response, reason, 32767);
         utils.writePacket(0x1B, response, this, "play", "Disconnect");
         
         this.tcpSocket.end();
+    }
+
+    sendPacket(name, ...args) {
+        const packetDef = this.packetManager.outboundPackets[this.state][name];
+
+        if (!packetDef) {
+            console.error(`Unknown packet "${name}" for state "${this.state}"`)
+            return;
+        };
+
+        const packetData = utils.createBufferObject();
+        utils.writeParameters(packetDef.parameters, packetData, ...args);
+
+        utils.writePacket(packetDef.id, packetData, this, this.state, name);
     }
 
 }

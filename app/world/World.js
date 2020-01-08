@@ -16,14 +16,14 @@ class World {
      * @param {string} filename 
      */
     constructor(path) {
-        this.path = "./" + path;
-        const fileExists = fs.existsSync(path);
-        const isDirectory = fs.lstatSync(path).isDirectory();
-        if(isDirectory) {
-            this.loadWorld();
-        } else {
-            console.log("Unable to load world!");
-        }
+        // this.path = "./" + path;
+        // const fileExists = fs.existsSync(path);
+        // const isDirectory = fs.lstatSync(path).isDirectory();
+        // if(isDirectory) {
+        //     this.loadWorld();
+        // } else {
+        //     console.log("Unable to load world!");
+        // }
     }
 
     getChunkPosition(x, z) {
@@ -32,22 +32,22 @@ class World {
 
     getChunkPacket(x, z, fullChunk) {
         const fullPacket = utils.createBufferObject();
-        utils.writeInt(x, fullPacket);
-        utils.writeInt(z, fullPacket);
-        utils.writeByte(1, fullPacket);
-        utils.writeVarInt(0x1, fullPacket);
+        utils.writeInt(fullPacket, x);
+        utils.writeInt(fullPacket, z);
+        utils.writeByte(fullPacket, 1);
+        utils.writeVarInt(fullPacket, 0x1);
         // Heightmaps
         utils.writeHeightmap(fullPacket);
         if(fullChunk) {
             // Biomes
             for(let i = 0; i < 1024; i++) {
-                utils.writeInt(0, fullPacket);
+                utils.writeInt(fullPacket, 0);
             }
         }
         // Chunk data
         this.getChunkData(x, z, fullPacket);
         // Block Entities
-        utils.writeVarInt(0, fullPacket);
+        utils.writeVarInt(fullPacket, 0);
 
         return fullPacket;
     }
@@ -55,7 +55,7 @@ class World {
     getChunkData(x, z, fullPacket) {
         const data = utils.createBufferObject();
         // Chunk sections
-        utils.writeVarInt(1, data);
+        utils.writeVarInt(data, 3);
         utils.appendData(data, this.getChunkSection(x, 0, z));
         //utils.appendData(data, this.getChunkSection(x, 1, z));
         //utils.appendData(data, this.getChunkSection(x, 2, z));
@@ -66,14 +66,14 @@ class World {
         //utils.appendData(data, this.getChunkSection(x, 7, z));
         //utils.appendData(data, this.getChunkSection(x, 8, z));
         //utils.appendData(data, this.getChunkSection(x, 9, z));
-        //utils.appendData(data, this.getChunkSection(x, 10, z));
+        utils.appendData(data, this.getChunkSection(x, 10, z));
         //utils.appendData(data, this.getChunkSection(x, 11, z));
         //utils.appendData(data, this.getChunkSection(x, 12, z));
         //utils.appendData(data, this.getChunkSection(x, 13, z));
         //utils.appendData(data, this.getChunkSection(x, 14, z));
-        //utils.appendData(data, this.getChunkSection(x, 15, z));
+        utils.appendData(data, this.getChunkSection(x, 15, z));
         // Write length in bytes
-        utils.writeVarInt(data.b.length, fullPacket);
+        utils.writeVarInt(fullPacket, data.b.length);
         // Write data structures
         utils.appendData(fullPacket, data.b);
     }
@@ -81,13 +81,13 @@ class World {
     getChunkSection(x, y, z, palette) {
         const chunkSection = utils.createBufferObject();
         // Block Count
-        utils.writeUShort(16*16*16, chunkSection);
+        utils.writeUShort(chunkSection, 16*16*16);
         // This cannot be any more than 32
         const bitsPerBlock = 4;
-        utils.writeByte(bitsPerBlock, chunkSection);
+        utils.writeByte(chunkSection, bitsPerBlock);
         // Palette
-        utils.writeVarInt(1, chunkSection);
-        utils.writeVarInt(1, chunkSection);
+        utils.writeVarInt(chunkSection, 1);
+        utils.writeVarInt(chunkSection, 1);
         // Data Array
         const longs = [];
         let longLow = 0;
@@ -125,8 +125,8 @@ class World {
                 }
             }
         }
-        utils.writeVarInt(longs.length, chunkSection);
-        utils.writeByteArray(Buffer.concat(longs), chunkSection);
+        utils.writeVarInt(chunkSection, longs.length);
+        utils.writeByteArray(chunkSection, Buffer.concat(longs));
         return chunkSection.b;    
     }
 

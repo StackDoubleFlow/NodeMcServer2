@@ -31,6 +31,6 @@ module.exports = (player, dataLength) => {
       "id": player.UUID
     });
   });
-  utils.writeJson(responseData, 32767, response);
+  utils.writeJson(response, responseData, 32767);
   utils.writePacket(0x00, response, player, "stat", "Response");
 };

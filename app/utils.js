@@ -187,11 +187,11 @@ export function readParameters(params, player) {
 
 /**
  * @param {string} param
- * @param {Player} player
+ * @param {Player} bufferObj
  * Player to read from
  * @return {Array} arguments
  */
-export function writeParameter(def, player, value) {
+export function writeParameter(def, bufferObj, value) {
     /**
      * @type {string}
      */
@@ -199,14 +199,16 @@ export function writeParameter(def, player, value) {
     let isArray = def.array;
 
     if (isArray) {
-        writeType(def.lengthType, player, value.length);
+        writeType(def.lengthType, bufferObj, value.length);
     
         for(let i = 0; i < value.length; i++) {
             if(def.parameters) {
                 for(let a of def.parameters)
-                    writeParameter(a, player, value[i]);
-            } else { 
-                writeType(type, player, value[i], def.max);
+                    writeParameter(a, bufferObj, value[i]);
+            } else {
+                if(def.values && value[i] in def.values)
+                    value = arg.values[value[i]];
+                writeType(type, bufferObj, value[i], def.max);
             } 
         } 
 
@@ -214,9 +216,11 @@ export function writeParameter(def, player, value) {
     } else {
         if(def.parameters) {
             for(let a of def.parameters)
-                writeParameter(a, player, value);
-        } else { 
-            writeType(type, player, value, def.max);
+                writeParameter(a, bufferObj, value);
+        } else {
+            if(def.values && value in def.values)
+                value = arg.values[value];
+            writeType(type, bufferObj, value, def.max);
         } 
     }
 }
@@ -228,10 +232,11 @@ export function writeParameter(def, player, value) {
  * @param {Player} player
  */
 export function writeParameters(params, player, ...values) {
-    assert(params.length === values.length, "Missing or too much data");
+    if(params.length !== values.length)
+        throw new Error("Missing or too much data");
 
     for (let i = 0; i < params.length; i++)
-        writeParameter(params[u], player, values[i]);
+        writeParameter(params[i], player, values[i]);
 }
 
 /**
@@ -310,7 +315,7 @@ export function readPosition(player) {
  * @param {Position} pos
  * @param {Player} bufferObject
  */
-export function writePosition(pos, bufferObject) {
+export function writePosition(bufferObject, pos) {
     var x = pos.x, y = pos.y, z = pos.z;
     var data = Buffer.alloc(8);
     var longHigh = ((x & 0x3FFFFFF) << 38) | ((z & 0x003FFFFF) >>> 16); // This shit shouldn't even work
@@ -439,7 +444,7 @@ export function prependData(bufferObject, data) {
  * @param {Object} bufferObject 
  * The object containing the buffer to write to
  */
-export function writeByte(byte, bufferObject) {
+export function writeByte(bufferObject, byte) {
     appendData(bufferObject, Buffer.from([byte]));
 }
 
@@ -452,8 +457,8 @@ export function writeByte(byte, bufferObject) {
  * The object containing the buffer to write to
  * @param {boolean} writeLength
  */
-export function writeByteArray(bytes, bufferObject, writeLength) {
-    if(writeLength) writeVarInt(bytes.length, bufferObject);
+export function writeByteArray(bufferObject, bytes, writeLength) {
+    if(writeLength) writeVarInt(bufferObject, bytes.length);
     appendData(bufferObject, Buffer.from(bytes));
 }
 
@@ -465,9 +470,9 @@ export function writeByteArray(bytes, bufferObject, writeLength) {
  * @param {Object} bufferObject 
  * The object containing the buffer to write to
  */
-export function writeAngle(degrees, bufferObject) {
+export function writeAngle(bufferObject, degrees) {
     var angle = Math.floor(((degrees % 360) / 360) * 256);
-    writeByte(angle, bufferObject);
+    writeByte(bufferObject, angle);
 }
 
 
@@ -492,19 +497,19 @@ export function readByteArray(player) {
 /**
  * Writes a string to a buffer
  * 
- * @param {string} string 
+ * @param {string} str 
  * String to write to the network stream
  * @param {number} n 
  * Maximum string length
  * @param {Object} bufferObject 
  * The object containing the buffer to write to
  */
-export function writeString(string, n, bufferObject) {
-    var out = Buffer.from(string, 'utf-8');
-    if(string.length > n || out.length > n*4) {
-        console.error("Error writing string to network stream: ", string.length, n);
+export function writeString(bufferObject, str, n) {
+    var out = Buffer.from(str, 'utf-8');
+    if(str.length > n || out.length > n*4) {
+        console.error("Error writing string to network stream: ", str.length, n);
     }
-    writeVarInt(out.length, bufferObject);
+    writeVarInt(bufferObject, out.length);
     appendData(bufferObject, out);
 }
 
@@ -514,7 +519,7 @@ export function writeString(string, n, bufferObject) {
  * @param {number} value 
  * @param {Object} bufferObject 
  */
-export function writeFloat(value, bufferObject) {
+export function writeFloat(bufferObject, value) {
     var temp = Buffer.alloc(4);
     temp.writeFloatBE(value, 0);
     appendData(bufferObject, temp);
@@ -526,7 +531,7 @@ export function writeFloat(value, bufferObject) {
  * @param {number} value 
  * @param {Object} bufferObject 
  */
-export function writeDouble(value, bufferObject) {
+export function writeDouble(bufferObject, value) {
     var temp = Buffer.alloc(8);
     temp.writeDoubleBE(value, 0);
     appendData(bufferObject, temp);
@@ -542,8 +547,8 @@ export function writeDouble(value, bufferObject) {
  * @param {Object} bufferObject 
  * The object containing the buffer to write to
  */
-export function writeJson(json, m, bufferObject) {
-    writeString(JSON.stringify(json), m, bufferObject);
+export function writeJson(bufferObject, json, m) {
+    writeString(bufferObject, JSON.stringify(json), m);
 }
 
 /**
@@ -554,7 +559,7 @@ export function writeJson(json, m, bufferObject) {
  * @param {Object} bufferObject 
  * The object containing the buffer to write to
  */
-export function writeLong(value, bufferObject) {
+export function writeLong(bufferObject, value) {
     const b = Buffer.alloc(8);
     const MAX_UINT32 = 0xFFFFFFFF;
     const big = ~~(value / MAX_UINT32);
@@ -572,7 +577,7 @@ export function writeLong(value, bufferObject) {
  * @param {Object} bufferObject 
  * The object containing the buffer to write to
  */
-export function writeVarInt(value, bufferObject) {
+export function writeVarInt(bufferObject, value) {
     do {
         var temp = value & 0b01111111;
         // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
@@ -580,7 +585,7 @@ export function writeVarInt(value, bufferObject) {
         if (value != 0) {
             temp |= 0b10000000;
         }
-        writeByte(temp, bufferObject);
+        writeByte(bufferObject, temp);
     } while (value != 0);
 }
 
@@ -592,7 +597,7 @@ export function writeVarInt(value, bufferObject) {
  * @@param {Object} bufferObject
  * The object containing the buffer to write to
  */
-export function writeVarLong(value, bufferObject) {
+export function writeVarLong(bufferObject, value) {
     do {
         var temp = value & 0b01111111;
         // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
@@ -600,7 +605,7 @@ export function writeVarLong(value, bufferObject) {
         if (value != 0) {
             temp |= 0b10000000;
         }
-        writeByte(temp, bufferObject);
+        writeByte(bufferObject, temp);
     } while (value != 0);
 }
 
@@ -609,13 +614,13 @@ export function writeVarLong(value, bufferObject) {
  * 
  * @param {number} value
  * Value to write to the network stream
- * @param {Object} buffer 
+ * @param {Object} bufferObject 
  * The object containing the buffer to write to
  */
-export function writeInt(value, buffer) {
+export function writeInt(bufferObject, value) {
     var temp = Buffer.alloc(4);
     temp.writeInt32BE(value, 0);
-    appendData(buffer, temp);
+    appendData(bufferObject, temp);
 }
 
 /**
@@ -624,7 +629,7 @@ export function writeInt(value, buffer) {
  * @param {number} value 
  * @param {Object} bufferObject 
  */
-export function writeShort(value, bufferObject) {
+export function writeShort(bufferObject, value) {
     var temp = Buffer.alloc(2);
     temp.writeInt16BE(value);
     appendData(bufferObject, temp);
@@ -636,7 +641,7 @@ export function writeShort(value, bufferObject) {
  * @param {number} value 
  * @param {Object} bufferObject 
  */
-export function writeUShort(value, bufferObject) {
+export function writeUShort(bufferObject, value) {
     var temp = Buffer.alloc(2);
     temp.writeUInt16BE(value);
     appendData(bufferObject, temp);
@@ -650,7 +655,7 @@ export function writeUShort(value, bufferObject) {
  * @param {Object} bufferObject
  * the object containing the buffer to write to
  */
-export function writeUUID(player, bufferObject) {
+export function writeUUID(bufferObject, player) {
     var temp = Buffer.from(player.unformattedUUID, 'hex');
     appendData(bufferObject, temp);
 }
@@ -663,11 +668,11 @@ export function writeUUID(player, bufferObject) {
  * @param {Object} bufferObject
  * the object containing the buffer to write to
  */
-export function writeNbt(value, bufferObject) {
+export function writeNbt(bufferObject, value) {
     
 }
 
-export function writeNBitLong(n, value, bufferObject) {
+export function writeNBitLong(bufferObject, n, value) {
     if (n % 8 !== 0) throw new Error("no");
     
     var longs = [];
@@ -706,7 +711,7 @@ export function writeNBitLong(n, value, bufferObject) {
 export function writeHeightmap(bufferObject) {
     function writeStr(name) {
         var out = Buffer.from(name, 'utf-8');
-        writeUShort(name.length, bufferObject);
+        writeUShort(bufferObject, name.length);
         appendData(bufferObject, out);
     }
     
@@ -744,16 +749,16 @@ export function writeHeightmap(bufferObject) {
 
 
     // Compound
-    writeByte(0x0A, bufferObject); // Type ID (Compound)
+    writeByte(bufferObject, 0x0A); // Type ID (Compound)
     writeStr("Hightmap"); // Name
 
     // Long array
-    writeByte(0x0C, bufferObject); // Type ID (TAG_Long_Array)
+    writeByte(bufferObject, 0x0C); // Type ID (TAG_Long_Array)
     writeStr("MOTION_BLOCKING"); // Name
-    writeInt(longs.length, bufferObject); // Length
-    writeByteArray(Buffer.concat(longs), bufferObject, false); // Write the long boi
+    writeInt(bufferObject, longs.length); // Length
+    writeByteArray(bufferObject, Buffer.concat(longs), false); // Write the long boi
     
-    writeByte(0x00, bufferObject); // End Compound
+    writeByte(bufferObject, 0x00); // End Compound
 } 
 
 /**
@@ -776,25 +781,25 @@ export function writePacket(packetID, data, player, state, name) {
         prependData(dataDuplicate, data.b);
         var bufferObject = createBufferObject();
         var temp = createBufferObject();
-        writeVarInt(packetID, temp); // Packet ID
+        writeVarInt(temp, packetID); // Packet ID
         prependData(dataDuplicate, temp.b);
         if(player.usePacketCompression) {
             if(data.b.length >= 500) {
                 temp = createBufferObject(); // Buffer containing uncompressed packet length
-                writeVarInt(dataDuplicate.b.length, temp); // Uncompressed packet length
+                writeVarInt(temp, dataDuplicate.b.length); // Uncompressed packet length
                 dataDuplicate.b = zlib.deflateSync(dataDuplicate.b); // Compress packet
                 prependData(dataDuplicate, temp.b); // Put uncompressed packet length before packet data
-                writeVarInt(dataDuplicate.b.length, bufferObject); // Write length of uncompressed packet length + compressed data and packet ID length 
-                appendData(bufferObject, dataDuplicate.b); // Put that length because anything else
+                writeVarInt(bufferObject, dataDuplicate.b.length); // Write length of uncompressed packet length + compressed data and packet ID length 
+                appendData(bufferObject, dataDuplicate.b); // Put that length before anything else
             } else {
                 temp = createBufferObject(); // Buffer containing uncompressed packet length
-                writeVarInt(0, temp); // Uncompressed packet length (Zero since uncompressed)
+                writeVarInt(temp, 0); // Uncompressed packet length (Zero since uncompressed)
                 prependData(dataDuplicate, temp.b); // Put uncompressed packet length before packet data
-                writeVarInt(dataDuplicate.b.length, bufferObject); // Write length of uncompressed packet length + compressed data and packet ID length 
-                appendData(bufferObject, dataDuplicate.b); // Put that length because anything else
+                writeVarInt(bufferObject, dataDuplicate.b.length); // Write length of uncompressed packet length + compressed data and packet ID length 
+                appendData(bufferObject, dataDuplicate.b); // Put that length before anything else
             }
         } else {
-            writeVarInt(dataDuplicate.b.length, bufferObject); // Length
+            writeVarInt(bufferObject, dataDuplicate.b.length); // Length
             appendData(bufferObject, dataDuplicate.b);
         }
         
@@ -805,7 +810,7 @@ export function writePacket(packetID, data, player, state, name) {
         }
         const clientName = player.username || player.tcpSocket.remoteAddress.substr(7);
         if (!(['ChunkData', 'ChatMessage', 'KeepAlive', 'Animation', "EntityLook", "EntityRelativeMove", "PlayerInfo", 
-                "EntityLookAndRelativeMove", "EntityHeadLook"].includes(name)))
+                "EntityLookAndRelativeMove", "EntityHeadLook", "EntityMetadata"].includes(name)))
             console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ S->C ~~ " + state + " ~ " + name + (player.usePacketCompression && data.b.length >= 500 ? " ~~ Compressed: Saved " + (data.b.length - bufferObject.b.length) + " bytes" : " ~~ Not Compressed"));
     } catch(e) {
         console.error(e.stack);
@@ -1018,16 +1023,3 @@ export function readNBT(data) {
 
     return nbtStructure;
 }
-
-//TODO: Packet Compression
-
-/**
- * Writes a compressed packet to the network stream (Including the packet header)
- * 
- * @param {number} packetID
- * @param {Buffer} data
- */
-export function writeCompressedPacket(packetID, data) {
-
-}
-

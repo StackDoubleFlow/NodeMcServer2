@@ -210,6 +210,7 @@ module.exports = {
       },
       0x2A: {
           name: "Animation",
+          auto: true,
           parameters: [
               {
                   name: "hand",
