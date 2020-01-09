@@ -13,14 +13,14 @@ export default class EventManager {
     }
   }
 
-  call(eventName, ...args) {
-    eventName = eventName.toLowerCase();
-    if (!this.listeners[eventName]) return;
+  call(event, ...args) {
+    event = event.toLowerCase();
+    if (!this.listeners[event]) return;
 
     let canceled = false;
 
-    for(let priority of Object.keys(this.listeners[eventName]))
-      for(let handler of this.listeners[eventName][priority]) {
+    for(let priority of Object.keys(this.listeners[event]))
+      for(let handler of this.listeners[event][priority]) {
         try {
           if(!canceled || handler.ignoreCanceled) {
             const rtn = handler.handler.call(handler.plugin, ...args);
@@ -29,7 +29,7 @@ export default class EventManager {
               canceled === true;
           }
         } catch(e) {
-          console.error(`Error whitlist calling event ${eventName} for plugin ${handler.plugin.name}`);
+          console.error(`Error whitlist calling event ${event} for plugin ${handler.plugin.name}`);
         }
       }
 

@@ -1,7 +1,8 @@
 
 'use strict';
 
-var MinecraftServer = require('./app/MinecraftServer.js');
+// var MinecraftServer = require('./app/MinecraftServer.js');
+import { MinecraftServer } from "./app";
 
 var server = new MinecraftServer();
 global.server = server;

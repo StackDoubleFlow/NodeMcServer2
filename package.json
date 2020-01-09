@@ -2,7 +2,7 @@
   "name": "mcnodeserver",
   "version": "1.0.0",
   "description": "A minecraft server written in node.js",
-  "main": "index.js",
+  "main": "app/index.js",
   "scripts": {
     "test": "node entry.js"
   },

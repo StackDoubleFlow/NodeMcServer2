@@ -28,7 +28,7 @@ export default class CommandContext {
         /**
          * @type {Player}
          */
-        this.Player = sender;
+        this.player = sender;
         /**
          * @type {string}
          */

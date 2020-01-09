@@ -1,6 +1,48 @@
-import Plugin from "./app/api/plugins/Plugin";
+
+import CommandContext from "./api/commands/CommandContext";
+import CommandExecutor from "./api/commands/CommandExecutor";
+import CommandHandler from "./api/commands/CommandHandler";
+import EventManager from "./api/events/EventManager";
+import Plugin from "./api/plugins/Plugin";
+import ConsoleInterface from "./console/ConsoleInterface";
+import Packet from "./packets/Packet";
+import PacketManager from "./packets/PacketManager";
+import Block from "./world/Block";
+import BlockPalette from "./world/BlockPalette";
+import Chunk from "./world/Chunk";
+import Item from "./world/Item";
+import Location from "./world/Location";
+import Position from "./world/Position";
+import World from "./world/World";
+import MinecraftServer from "./MinecraftServer";
+import Player from "./Player";
+
+import versions from "./packets/versions/versions";
+import utils from "./utils";
 
 module.exports = {
+    CommandContext,
+    CommandExecutor,
+    CommandHandler,
+    EventManager,
+    Plugin,
+    ConsoleInterface,
+    versions,
+    Packet,
+    PacketManager,
+    Block,
+    BlockPalette,
+    Chunk,
+    Item,
+    Location,
+    Position,
+    World,
+    MinecraftServer,
+    Player,
+    utils
+};
+
+const test = {
     api: {
         commands: {},
         plugins: {
