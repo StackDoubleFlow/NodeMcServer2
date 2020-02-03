@@ -1,49 +1,48 @@
 import Player from "./Player";
+import Position from "./world/Position";
 
 var net = require('net');
 var crypto = require('crypto');
 var https = require('https');
-var Position = require('./world/Position.js');
 var zlib = require('zlib');
 
 export const types = {
-    read: {
-        boolean: readBoolean,
-        double: readDouble,
-        float: readFloat,
-        long: readLong,
-        position: readPosition,
-        string: readString,
-        ushort: readUShort,
-        varint: readVarInt,
-        varlong: readVarLong,
-        nbt: readNBT,
-        null: () => {},
-        [null]: () => {}
-    },
-    write: {
-        byte: writeByte,
-        boolean: writeByte,
-        double: writeDouble,
-        float: writeFloat,
-        long: writeLong,
-        position: writePosition,
-        string: writeString,
-        ushort: writeUShort,
-        varint: writeVarInt,
-        varlong: writeVarLong,
-        angle: writeAngle,
-        heightmap: writeHeightmap,
-        int: writeInt,
-        json: writeJson,
-        nbitlong: writeNBitLong,
-        nbt: writeNbt,
-        short: writeShort,
-        uuid: writeUUID,
-        buffer: appendData,
-        null: () => {},
-        [null]: () => {}
-    }
+  read: {
+    boolean: readBoolean,
+    double: readDouble,
+    float: readFloat,
+    long: readLong,
+    position: readPosition,
+    string: readString,
+    ushort: readUShort,
+    varint: readVarInt,
+    varlong: readVarLong,
+    nbt: readNBT,
+    "null": () => { },
+    [null]: () => { }
+  },
+  write: {
+    byte: writeByte,
+    boolean: writeByte,
+    double: writeDouble,
+    float: writeFloat,
+    long: writeLong,
+    position: writePosition,
+    string: writeString,
+    ushort: writeUShort,
+    varint: writeVarInt,
+    varlong: writeVarLong,
+    angle: writeAngle,
+    int: writeInt,
+    json: writeJson,
+    nbitlong: writeNBitLong,
+    nbt: writeNbt,
+    short: writeShort,
+    uuid: writeUUID,
+    buffer: appendData,
+    "null": () => { },
+    [null]: () => { }
+  }
 }
 
 /*
@@ -58,11 +57,11 @@ export const types = {
  * @return {string} data
  */
 export const createGetRequest = (url) => new Promise((resolve, reject) => {
-    https.get(url, (res) => {
-        let data = '';
-        res.on('end', () => resolve(data));
-        res.on('data', (buf) => data += buf.toString());
-    })     .on('error', e => reject(e));
+  https.get(url, (res) => {
+    let data = '';
+    res.on('end', () => resolve(data));
+    res.on('data', (buf) => data += buf.toString());
+  }).on('error', e => reject(e));
 });
 
 /**
@@ -72,11 +71,11 @@ export const createGetRequest = (url) => new Promise((resolve, reject) => {
  * @param {Player} player
  */
 export function inflate(length, player) {
-    var data = player.internalBuffer.slice(player.internalIndex, player.internalIndex+length);
-    var inflatedData = zlib.inflateSync(data);
-    var dataToBeRead = player.internalBuffer.slice(player.internalIndex+length, player.internalBuffer.length-1);
-    player.internalBuffer = Buffer.concat([inflatedData, dataToBeRead]);
-    player.internalIndex = 0;
+  var data = player.internalBuffer.slice(player.internalIndex, player.internalIndex + length);
+  var inflatedData = zlib.inflateSync(data);
+  var dataToBeRead = player.internalBuffer.slice(player.internalIndex + length, player.internalBuffer.length - 1);
+  player.internalBuffer = Buffer.concat([inflatedData, dataToBeRead]);
+  player.internalIndex = 0;
 }
 
 /**
@@ -86,9 +85,9 @@ export function inflate(length, player) {
  * Player to read from
  */
 export function resetInternalBuffer(player) {
-    player.internalBuffer = player.tcpSocket.read();
-    if(!player.internalBuffer) console.log("Internal Buffer was null");
-    player.internalIndex = 0;
+  player.internalBuffer = player.tcpSocket.read();
+  if (!player.internalBuffer) console.log("Internal Buffer was null");
+  player.internalIndex = 0;
 }
 
 /**
@@ -98,9 +97,9 @@ export function resetInternalBuffer(player) {
  * Player to read from
  */
 export function resetInternalBufferUsingDecipher(player) {
-    player.internalBuffer = player.decipher.read();
-    if(!player.internalBuffer) console.log("Internal Buffer was null");
-    player.internalIndex = 0;
+  player.internalBuffer = player.decipher.read();
+  if (!player.internalBuffer) console.log("Internal Buffer was null");
+  player.internalIndex = 0;
 }
 
 /**
@@ -114,20 +113,20 @@ export function resetInternalBufferUsingDecipher(player) {
  * Data that has been read
  */
 export function readBytes(player, bytes) {
-    if(player.internalIndex > player.internalBuffer.length) {
-        console.log("Out of bounds error reading internal buffer: ", player.internalIndex, " > ", player.internalBuffer.length-1);
-    }
-    var data = player.internalBuffer.slice(player.internalIndex, bytes + player.internalIndex);
-    player.internalIndex += bytes;
-    return data;
+  if (player.internalIndex > player.internalBuffer.length) {
+    console.log("Out of bounds error reading internal buffer: ", player.internalIndex, " > ", player.internalBuffer.length - 1);
+  }
+  var data = player.internalBuffer.slice(player.internalIndex, bytes + player.internalIndex);
+  player.internalIndex += bytes;
+  return data;
 }
 
 export function readType(type, player, ...args) {
-    return types.read[type](player, ...args);
+  return types.read[type](player, ...args);
 }
 
 export function writeType(type, player, ...args) {
-    return types.write[type](player, ...args);
+  return types.write[type](player, ...args);
 }
 
 /**
@@ -137,39 +136,39 @@ export function writeType(type, player, ...args) {
  * @return {Array} arguments
  */
 export function readParameter(arg, player) {
-    /**
-     * @type {string}
-     */
-    let type = arg.type;
-    let isArray = arg.array;
-    let length = 1;
+  /**
+   * @type {string}
+   */
+  let type = arg.type;
+  let isArray = arg.array;
+  let length = 1;
 
-    if (isArray) {
-        const value = [];
-        length = readType(arg.lengthType, player);
-    
-        for(let i = 0; i < length; i++) {
-            if(arg.parameters) {
-                const v = {};
-                for(let a of arg.parameters) {
-                    v[a.name] = readParameter(a, player);
-                }
-                value.push(v);
-            } else {
-                let v = readType(type, player, arg.max);
-                if(arg.values && v in arg.values)
-                    v = arg.values[v];
-                value.push(v);
-            }
+  if (isArray) {
+    const value = [];
+    length = readType(arg.lengthType, player);
+
+    for (let i = 0; i < length; i++) {
+      if (arg.parameters) {
+        const v = {};
+        for (let a of arg.parameters) {
+          v[a.name] = readParameter(a, player);
         }
-
-        return value;
-    } else {
-        let value = readType(type, player, arg.max);
-        if(arg.values && value in arg.values)
-            value = arg.values[value];
-        return value;
+        value.push(v);
+      } else {
+        let v = readType(type, player, arg.max);
+        if (arg.values && v in arg.values)
+          v = arg.values[v];
+        value.push(v);
+      }
     }
+
+    return value;
+  } else {
+    let value = readType(type, player, arg.max);
+    if (arg.values && value in arg.values)
+      value = arg.values[value];
+    return value;
+  }
 }
 
 /**
@@ -179,11 +178,11 @@ export function readParameter(arg, player) {
  * @return {Array} arguments
  */
 export function readParameters(params, player) {
-    const args = [];
-    for(let arg of params) {
-        args.push(readParameter(arg, player));
-    }
-    return args;
+  const args = [];
+  for (let arg of params) {
+    args.push(readParameter(arg, player));
+  }
+  return args;
 }
 
 /**
@@ -193,38 +192,38 @@ export function readParameters(params, player) {
  * @return {Array} arguments
  */
 export function writeParameter(def, bufferObj, value) {
-    /**
-     * @type {string}
-     */
-    let type = def.type;
-    let isArray = def.array;
+  /**
+   * @type {string}
+   */
+  let type = def.type;
+  let isArray = def.array;
 
-    if (isArray) {
-        if(def.lengthType)
-            writeType(def.lengthType, bufferObj, value.length);
-    
-        for(let i = 0; i < value.length; i++) {
-            if(def.parameters) {
-                for(let a of def.parameters)
-                    writeParameter(a, bufferObj, value[i]);
-            } else {
-                if(def.values && value[i] in def.values)
-                    value = arg.values[value[i]];
-                writeType(type, bufferObj, value[i], def.max);
-            } 
-        } 
+  if (isArray) {
+    if (def.lengthType)
+      writeType(def.lengthType, bufferObj, value.length);
 
-        return value;
-    } else {
-        if(def.parameters) {
-            for(let a of def.parameters)
-                writeParameter(a, bufferObj, value);
-        } else {
-            if(def.values && value in def.values)
-                value = arg.values[value];
-            writeType(type, bufferObj, value, def.max);
-        } 
+    for (let i = 0; i < value.length; i++) {
+      if (def.parameters) {
+        for (let a of def.parameters)
+          writeParameter(a, bufferObj, value[i]);
+      } else {
+        if (def.values && value[i] in def.values)
+          value = arg.values[value[i]];
+        writeType(type, bufferObj, value[i], def.max);
+      }
     }
+
+    return value;
+  } else {
+    if (def.parameters) {
+      for (let a of def.parameters)
+        writeParameter(a, bufferObj, value);
+    } else {
+      if (def.values && value in def.values)
+        value = arg.values[value];
+      writeType(type, bufferObj, value, def.max);
+    }
+  }
 }
 
 /**
@@ -234,11 +233,11 @@ export function writeParameter(def, bufferObj, value) {
  * @param {Player} player
  */
 export function writeParameters(params, player, ...values) {
-    if(params.length !== values.length)
-        throw new Error("Missing or too much data");
+  if (params.length !== values.length)
+    throw new Error("Missing or too much data");
 
-    for (let i = 0; i < params.length; i++)
-        writeParameter(params[i], player, values[i]);
+  for (let i = 0; i < params.length; i++)
+    writeParameter(params[i], player, values[i]);
 }
 
 /**
@@ -250,8 +249,8 @@ export function writeParameters(params, player, ...values) {
  * Value of the Unsigned Shor that has been read
  */
 export function readUShort(player) {
-    var buffer = readBytes(player, 2);
-    return buffer.readUIntBE(0, 2);
+  var buffer = readBytes(player, 2);
+  return buffer.readUIntBE(0, 2);
 }
 
 /**
@@ -263,8 +262,8 @@ export function readUShort(player) {
  * Value of the Float that has been read
  */
 export function readFloat(player) {
-    var buffer = readBytes(player, 4);
-    return buffer.readFloatBE(0);
+  var buffer = readBytes(player, 4);
+  return buffer.readFloatBE(0);
 }
 
 /**
@@ -276,8 +275,8 @@ export function readFloat(player) {
  * Value of the Double that has been read
  */
 export function readDouble(player) {
-    var buffer = readBytes(player, 8);
-    return buffer.readDoubleBE(0);
+  var buffer = readBytes(player, 8);
+  return buffer.readDoubleBE(0);
 }
 
 
@@ -290,8 +289,8 @@ export function readDouble(player) {
  * Value of the Boolean that has been read
  */
 export function readBoolean(player) {
-    var byte = readBytes(player, 1).readInt8(0);
-    return (byte === 0 ? false : true);
+  var byte = readBytes(player, 1).readInt8(0);
+  return (byte === 0 ? false : true);
 }
 
 /**
@@ -301,16 +300,16 @@ export function readBoolean(player) {
  * @return {Position}
  */
 export function readPosition(player) {
-    var data = readBytes(player, 8);
-    var x = data.readUInt32BE(0) >>> 6;
-    var zHigh = (data.readUInt32BE(2) & 0x003FFFFF) << 4;
-    var zLow = (data.readUInt32BE(4) & 0x0000F000) >> 12;
-    var z = zLow | zHigh;
-    var y = data.readUInt32BE(4) & 0x00000FFF;
-    if (x >= 0x02000000) x -= 67108864;
-    if (z >= 0x02000000) z -= 67108864;
-    //if (y >= 0x800)       y -= 0x1000;
-    return new Position(x, y, z);
+  var data = readBytes(player, 8);
+  var x = data.readUInt32BE(0) >>> 6;
+  var zHigh = (data.readUInt32BE(2) & 0x003FFFFF) << 4;
+  var zLow = (data.readUInt32BE(4) & 0x0000F000) >> 12;
+  var z = zLow | zHigh;
+  var y = data.readUInt32BE(4) & 0x00000FFF;
+  if (x >= 0x02000000) x -= 67108864;
+  if (z >= 0x02000000) z -= 67108864;
+  //if (y >= 0x800)       y -= 0x1000;
+  return new Position(x, y, z);
 }
 
 /**
@@ -318,13 +317,13 @@ export function readPosition(player) {
  * @param {Player} bufferObject
  */
 export function writePosition(bufferObject, pos) {
-    var x = pos.x, y = pos.y, z = pos.z;
-    var data = Buffer.alloc(8);
-    var longHigh = ((x & 0x3FFFFFF) << 38) | ((z & 0x003FFFFF) >>> 16); // This shit shouldn't even work
-    var longLow = (y & 0xFFF) | ((z & 0xFFFFF) << 12);                  // I'm probably utilizing a bug in js but that's cool I guess
-    data.writeInt32BE(longHigh >> 32, 0);
-    data.writeInt32BE(longLow, 4);
-    appendData(bufferObject, data);
+  var x = pos.x, y = pos.y, z = pos.z;
+  var data = Buffer.alloc(8);
+  var longHigh = ((x & 0x3FFFFFF) << 38) | ((z & 0x003FFFFF) >>> 16); // This shit shouldn't even work
+  var longLow = (y & 0xFFF) | ((z & 0xFFFFF) << 12);                  // I'm probably utilizing a bug in js but that's cool I guess
+  data.writeInt32BE(longHigh >> 32, 0);
+  data.writeInt32BE(longLow, 4);
+  appendData(bufferObject, data);
 }
 
 /**
@@ -336,11 +335,11 @@ export function writePosition(bufferObject, pos) {
  * Maximum string length
  */
 export function readString(player, n) {
-    var length = readVarInt(player);
-    if(n > 32767) {
-        console.log("n was greater than 32767 while reading string!");
-    }
-    return readBytes(player, length).toString("utf-8");
+  var length = readVarInt(player);
+  if (n > 32767) {
+    console.log("n was greater than 32767 while reading string!");
+  }
+  return readBytes(player, length).toString("utf-8");
 }
 
 /**
@@ -352,24 +351,24 @@ export function readString(player, n) {
  * @return {number} value
  * Value of the VarInt that has been read
  */
-export function readVarInt(player, returnLength=false) {
-    var numRead = 0;
-    var result = 0;
-    var read;
-    do {
-        read = readBytes(player, 1).readUInt8(0);
-        var value = (read & 0b01111111);
-        result |= (value << (7 * numRead));
-        numRead++;
-        if (numRead > 5) {
-            console.error("VarInt is too big");
-        }
-    } while ((read & 0b10000000) != 0);
-    if(returnLength) {
-        return { val: result, len: numRead };
-    } else {
-        return result;
+export function readVarInt(player, returnLength = false) {
+  var numRead = 0;
+  var result = 0;
+  var read;
+  do {
+    read = readBytes(player, 1).readUInt8(0);
+    var value = (read & 0b01111111);
+    result |= (value << (7 * numRead));
+    numRead++;
+    if (numRead > 5) {
+      console.error("VarInt is too big");
     }
+  } while ((read & 0b10000000) != 0);
+  if (returnLength) {
+    return { val: result, len: numRead };
+  } else {
+    return result;
+  }
 }
 
 /**
@@ -381,21 +380,21 @@ export function readVarInt(player, returnLength=false) {
  * Value of the VarLong that has been read
  */
 export function readVarLong(player) {
-    var numRead = 0;
-    var result = 0;
-    var read;
-    do {
-        read = readBytes(player, 1);
-        var value = (read & 0b01111111);
-        result |= (value << (7 * numRead));
+  var numRead = 0;
+  var result = 0;
+  var read;
+  do {
+    read = readBytes(player, 1);
+    var value = (read & 0b01111111);
+    result |= (value << (7 * numRead));
 
-        numRead++;
-        if (numRead > 10) {
-            console.error("VarLong is too big");
-        }
-    } while ((read & 0b10000000) != 0);
+    numRead++;
+    if (numRead > 10) {
+      console.error("VarLong is too big");
+    }
+  } while ((read & 0b10000000) != 0);
 
-    return result;
+  return result;
 }
 
 /**
@@ -407,11 +406,11 @@ export function readVarLong(player) {
  * Value of the Long that has been read
  */
 export function readLong(player) {
-    var buffer = readBytes(player, 8);
-    var low = buffer.readInt32BE(4);
-    var n = buffer.readInt32BE() * 4294967296.0 + low;
-    if (low < 0) n += 4294967296;
-    return n;
+  var buffer = readBytes(player, 8);
+  var low = buffer.readInt32BE(4);
+  var n = buffer.readInt32BE() * 4294967296.0 + low;
+  if (low < 0) n += 4294967296;
+  return n;
 }
 
 /**
@@ -423,7 +422,7 @@ export function readLong(player) {
  * The data to append to the buffer
  */
 export function appendData(bufferObject, data) {
-    bufferObject.b = Buffer.concat([bufferObject.b, data]);
+  bufferObject.b = Buffer.concat([bufferObject.b, data]);
 }
 
 /**
@@ -435,7 +434,7 @@ export function appendData(bufferObject, data) {
  * The data to prepend to the buffer
  */
 export function prependData(bufferObject, data) {
-    bufferObject.b = Buffer.concat([data, bufferObject.b]);
+  bufferObject.b = Buffer.concat([data, bufferObject.b]);
 }
 
 /**
@@ -447,7 +446,7 @@ export function prependData(bufferObject, data) {
  * The object containing the buffer to write to
  */
 export function writeByte(bufferObject, byte) {
-    appendData(bufferObject, Buffer.from([byte]));
+  appendData(bufferObject, Buffer.from([byte]));
 }
 
 /**
@@ -460,8 +459,8 @@ export function writeByte(bufferObject, byte) {
  * @param {boolean} writeLength
  */
 export function writeByteArray(bufferObject, bytes, writeLength) {
-    if(writeLength) writeVarInt(bufferObject, bytes.length);
-    appendData(bufferObject, Buffer.from(bytes));
+  if (writeLength) writeVarInt(bufferObject, bytes.length);
+  appendData(bufferObject, Buffer.from(bytes));
 }
 
 /**
@@ -473,8 +472,8 @@ export function writeByteArray(bufferObject, bytes, writeLength) {
  * The object containing the buffer to write to
  */
 export function writeAngle(bufferObject, degrees) {
-    var angle = Math.floor(((degrees % 360) / 360) * 256);
-    writeByte(bufferObject, angle);
+  var angle = Math.floor(((degrees % 360) / 360) * 256);
+  writeByte(bufferObject, angle);
 }
 
 
@@ -487,12 +486,12 @@ export function writeAngle(bufferObject, degrees) {
  * Bytes of byte array that has been read
  */
 export function readByteArray(player) {
-    var out = new Array();
-    var length = readVarInt(player);
-    for(var i = 0; i < length; i++) {
-        out.push(readBytes(player, 1).readUInt8());
-    }
-    return out;
+  var out = new Array();
+  var length = readVarInt(player);
+  for (var i = 0; i < length; i++) {
+    out.push(readBytes(player, 1).readUInt8());
+  }
+  return out;
 }
 
 
@@ -507,12 +506,12 @@ export function readByteArray(player) {
  * The object containing the buffer to write to
  */
 export function writeString(bufferObject, str, n) {
-    var out = Buffer.from(str, 'utf-8');
-    if(str.length > n || out.length > n*4) {
-        console.error("Error writing string to network stream: ", str.length, n);
-    }
-    writeVarInt(bufferObject, out.length);
-    appendData(bufferObject, out);
+  var out = Buffer.from(str, 'utf-8');
+  if (str.length > n || out.length > n * 4) {
+    console.error("Error writing string to network stream: ", str.length, n);
+  }
+  writeVarInt(bufferObject, out.length);
+  appendData(bufferObject, out);
 }
 
 /**
@@ -522,9 +521,9 @@ export function writeString(bufferObject, str, n) {
  * @param {Object} bufferObject 
  */
 export function writeFloat(bufferObject, value) {
-    var temp = Buffer.alloc(4);
-    temp.writeFloatBE(value, 0);
-    appendData(bufferObject, temp);
+  var temp = Buffer.alloc(4);
+  temp.writeFloatBE(value, 0);
+  appendData(bufferObject, temp);
 }
 
 /**
@@ -534,9 +533,9 @@ export function writeFloat(bufferObject, value) {
  * @param {Object} bufferObject 
  */
 export function writeDouble(bufferObject, value) {
-    var temp = Buffer.alloc(8);
-    temp.writeDoubleBE(value, 0);
-    appendData(bufferObject, temp);
+  var temp = Buffer.alloc(8);
+  temp.writeDoubleBE(value, 0);
+  appendData(bufferObject, temp);
 }
 
 /**
@@ -550,7 +549,7 @@ export function writeDouble(bufferObject, value) {
  * The object containing the buffer to write to
  */
 export function writeJson(bufferObject, json, m) {
-    writeString(bufferObject, JSON.stringify(json), m);
+  writeString(bufferObject, JSON.stringify(json), m);
 }
 
 /**
@@ -562,13 +561,13 @@ export function writeJson(bufferObject, json, m) {
  * The object containing the buffer to write to
  */
 export function writeLong(bufferObject, value) {
-    const b = Buffer.alloc(8);
-    const MAX_UINT32 = 0xFFFFFFFF;
-    const big = ~~(value / MAX_UINT32);
-    const low = (value % MAX_UINT32) - big;
-    b.writeUInt32BE(big, 0);
-    b.writeUInt32BE(low, 4) ;
-    appendData(bufferObject, b);
+  const b = Buffer.alloc(8);
+  const MAX_UINT32 = 0xFFFFFFFF;
+  const big = ~~(value / MAX_UINT32);
+  const low = (value % MAX_UINT32) - big;
+  b.writeUInt32BE(big, 0);
+  b.writeUInt32BE(low, 4);
+  appendData(bufferObject, b);
 }
 
 /**
@@ -580,15 +579,15 @@ export function writeLong(bufferObject, value) {
  * The object containing the buffer to write to
  */
 export function writeVarInt(bufferObject, value) {
-    do {
-        var temp = value & 0b01111111;
-        // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
-        value >>>= 7;
-        if (value != 0) {
-            temp |= 0b10000000;
-        }
-        writeByte(bufferObject, temp);
-    } while (value != 0);
+  do {
+    var temp = value & 0b01111111;
+    // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
+    value >>>= 7;
+    if (value != 0) {
+      temp |= 0b10000000;
+    }
+    writeByte(bufferObject, temp);
+  } while (value != 0);
 }
 
 /**
@@ -600,15 +599,15 @@ export function writeVarInt(bufferObject, value) {
  * The object containing the buffer to write to
  */
 export function writeVarLong(bufferObject, value) {
-    do {
-        var temp = value & 0b01111111;
-        // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
-        value >>>= 7;
-        if (value != 0) {
-            temp |= 0b10000000;
-        }
-        writeByte(bufferObject, temp);
-    } while (value != 0);
+  do {
+    var temp = value & 0b01111111;
+    // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
+    value >>>= 7;
+    if (value != 0) {
+      temp |= 0b10000000;
+    }
+    writeByte(bufferObject, temp);
+  } while (value != 0);
 }
 
 /**
@@ -620,9 +619,9 @@ export function writeVarLong(bufferObject, value) {
  * The object containing the buffer to write to
  */
 export function writeInt(bufferObject, value) {
-    var temp = Buffer.alloc(4);
-    temp.writeInt32BE(value, 0);
-    appendData(bufferObject, temp);
+  var temp = Buffer.alloc(4);
+  temp.writeInt32BE(value, 0);
+  appendData(bufferObject, temp);
 }
 
 /**
@@ -632,9 +631,9 @@ export function writeInt(bufferObject, value) {
  * @param {Object} bufferObject 
  */
 export function writeShort(bufferObject, value) {
-    var temp = Buffer.alloc(2);
-    temp.writeInt16BE(value);
-    appendData(bufferObject, temp);
+  var temp = Buffer.alloc(2);
+  temp.writeInt16BE(value);
+  appendData(bufferObject, temp);
 }
 
 /**
@@ -644,9 +643,9 @@ export function writeShort(bufferObject, value) {
  * @param {Object} bufferObject 
  */
 export function writeUShort(bufferObject, value) {
-    var temp = Buffer.alloc(2);
-    temp.writeUInt16BE(value);
-    appendData(bufferObject, temp);
+  var temp = Buffer.alloc(2);
+  temp.writeUInt16BE(value);
+  appendData(bufferObject, temp);
 }
 
 /**
@@ -658,8 +657,8 @@ export function writeUShort(bufferObject, value) {
  * the object containing the buffer to write to
  */
 export function writeUUID(bufferObject, player) {
-    var temp = Buffer.from(player.unformattedUUID, 'hex');
-    appendData(bufferObject, temp);
+  var temp = Buffer.from(player.unformattedUUID, 'hex');
+  appendData(bufferObject, temp);
 }
 
 /**
@@ -671,97 +670,68 @@ export function writeUUID(bufferObject, player) {
  * the object containing the buffer to write to
  */
 export function writeNbt(bufferObject, value) {
-    
+
 }
 
 export function writeNBitLong(bufferObject, n, value) {
-    if (n % 8 !== 0) throw new Error("no");
-    
-    var longs = [];
-    var longLow = 0;
-    var longHigh = 0;
-    for(var i = 0; i < 1; i++) {
-        var longOffset = (i * 9) % 64;
-        if(longOffset < 64 && longOffset + n - 1 >= 64) {
-            longHigh |= (value << longOffset) & 0xFFFFFF;
-            var temp = Buffer.alloc(8);
-            temp.writeInt32BE(longHigh);
-            temp.writeInt32BE(longLow, 4);
-            longs.push(temp);
-            longLow = longHigh = 0;
-            longLow |= value >> (64 - longOffset);
-        } else if(longOffset < 32 && longOffset + n - 1 >= 32) {
-            longLow |= (value << longOffset) & 0xFFFFFF;
-            longHigh |= value >> (32 - longOffset - 1);
-        } else if(longOffset < 32) {
-            longLow |= value << longOffset;
-        } else {
-            longHigh |= value << longOffset;
-        }
-        if(64 - longOffset == 9) {
-            var temp = Buffer.alloc(8);
-            temp.writeInt32BE(longHigh);
-            temp.writeInt32BE(longLow, 4);
-            longs.push(temp);
-            longLow = longHigh = 0;
-        }
-    }
+  if (n % 8 !== 0) throw new Error("no");
 
-    writeByteArray(longs, bufferObject);
+  var longs = [];
+  var longLow = 0;
+  var longHigh = 0;
+  for (var i = 0; i < 1; i++) {
+    var longOffset = (i * 9) % 64;
+    if (longOffset < 64 && longOffset + n - 1 >= 64) {
+      longHigh |= (value << longOffset) & 0xFFFFFF;
+      var temp = Buffer.alloc(8);
+      temp.writeInt32BE(longHigh);
+      temp.writeInt32BE(longLow, 4);
+      longs.push(temp);
+      longLow = longHigh = 0;
+      longLow |= value >> (64 - longOffset);
+    } else if (longOffset < 32 && longOffset + n - 1 >= 32) {
+      longLow |= (value << longOffset) & 0xFFFFFF;
+      longHigh |= value >> (32 - longOffset - 1);
+    } else if (longOffset < 32) {
+      longLow |= value << longOffset;
+    } else {
+      longHigh |= value << longOffset;
+    }
+    if (64 - longOffset == 9) {
+      var temp = Buffer.alloc(8);
+      temp.writeInt32BE(longHigh);
+      temp.writeInt32BE(longLow, 4);
+      longs.push(temp);
+      longLow = longHigh = 0;
+    }
+  }
+
+  writeByteArray(longs, bufferObject);
 }
 
-export function writeHeightmap(bufferObject) {
-    function writeStr(name) {
-        var out = Buffer.from(name, 'utf-8');
-        writeUShort(bufferObject, name.length);
-        appendData(bufferObject, out);
-    }
-    
-    var longs = [];
-    var longLow = 0;
-    var longHigh = 0;
-    for(var i = 0; i < 256; i++) {
-        // Testing maxHeight
-        var maxHeight = 256;
-        var longOffset = (i * 9) % 64;
-        if(longOffset < 64 && longOffset + 9 - 1 >= 64) {
-            longHigh |= (maxHeight << longOffset) & 0xFFFFFF;
-            var temp = Buffer.alloc(8);
-            temp.writeInt32BE(longHigh);
-            temp.writeInt32BE(longLow, 4);
-            longs.push(temp);
-            longLow = longHigh = 0;
-            longLow |= maxHeight >> (64 - longOffset);
-        } else if(longOffset < 32 && longOffset + 9 - 1 >= 32) {
-            longLow |= (maxHeight << longOffset) & 0xFFFFFF;
-            longHigh |= maxHeight >> (32 - longOffset - 1);
-        } else if(longOffset < 32) {
-            longLow |= maxHeight << longOffset;
-        } else {
-            longHigh |= maxHeight << longOffset;
-        }
-        if(64 - longOffset == 9) {
-            var temp = Buffer.alloc(8);
-            temp.writeInt32BE(longHigh);
-            temp.writeInt32BE(longLow, 4);
-            longs.push(temp);
-            longLow = longHigh = 0;
-        }
-    }
 
+export function writeNumsToNLongBuffer(data, bitsPerNum, nums) {
+  const longs = new Array(16 * 16 * 16 * bitsPerNum / 64).fill(0n);
+  const longMask = 0xFFFFFFFFFFFFFFFFn;
 
-    // Compound
-    writeByte(bufferObject, 0x0A); // Type ID (Compound)
-    writeStr("Hightmap"); // Name
+  for (let i = 0; i < nums.length; i++) {
+    const num = BigInt(nums[i] || 0);
+    const longOffset = BigInt((i * bitsPerNum) % 64);
+    const longIndex = Math.floor((i * bitsPerNum) / 64);
+    let shiftedLong = num << longOffset;
+    longs[longIndex] |= shiftedLong & longMask;
+    const overflow = shiftedLong & (longMask << 64n);
+    if (overflow) longs[longIndex + 1] |= overflow >> 64n;
+  }
 
-    // Long array
-    writeByte(bufferObject, 0x0C); // Type ID (TAG_Long_Array)
-    writeStr("MOTION_BLOCKING"); // Name
-    writeInt(bufferObject, longs.length); // Length
-    writeByteArray(bufferObject, Buffer.concat(longs), false); // Write the long boi
-    
-    writeByte(bufferObject, 0x00); // End Compound
-} 
+  writeVarInt(data, longs.length);
+
+  let buf = Buffer.alloc(longs.length * 8);
+  for (let i = 0; i < longs.length; i++) {
+    buf.writeBigUInt64BE(longs[i], i * 8);
+  }
+  writeByteArray(data, buf);
+}
 
 /**
  * Writes a packet to the network stream
@@ -778,45 +748,45 @@ export function writeHeightmap(bufferObject) {
  * The name of the packet used for logging
  */
 export function writePacket(packetID, data, player, state, name) {
-    try {
-        var dataDuplicate = createBufferObject();
-        prependData(dataDuplicate, data.b);
-        var bufferObject = createBufferObject();
-        var temp = createBufferObject();
-        writeVarInt(temp, packetID); // Packet ID
-        prependData(dataDuplicate, temp.b);
-        if(player.usePacketCompression) {
-            if(data.b.length >= 500) {
-                temp = createBufferObject(); // Buffer containing uncompressed packet length
-                writeVarInt(temp, dataDuplicate.b.length); // Uncompressed packet length
-                dataDuplicate.b = zlib.deflateSync(dataDuplicate.b); // Compress packet
-                prependData(dataDuplicate, temp.b); // Put uncompressed packet length before packet data
-                writeVarInt(bufferObject, dataDuplicate.b.length); // Write length of uncompressed packet length + compressed data and packet ID length 
-                appendData(bufferObject, dataDuplicate.b); // Put that length before anything else
-            } else {
-                temp = createBufferObject(); // Buffer containing uncompressed packet length
-                writeVarInt(temp, 0); // Uncompressed packet length (Zero since uncompressed)
-                prependData(dataDuplicate, temp.b); // Put uncompressed packet length before packet data
-                writeVarInt(bufferObject, dataDuplicate.b.length); // Write length of uncompressed packet length + compressed data and packet ID length 
-                appendData(bufferObject, dataDuplicate.b); // Put that length before anything else
-            }
-        } else {
-            writeVarInt(bufferObject, dataDuplicate.b.length); // Length
-            appendData(bufferObject, dataDuplicate.b);
-        }
-        
-        if(player.useEncryption) {
-            player.cipher.write(bufferObject.b);
-        } else {
-            player.tcpSocket.write(bufferObject.b);
-        }
-        const clientName = player.username || player.tcpSocket.remoteAddress.substr(7);
-        if (!(['ChunkData', 'ChatMessage', 'KeepAlive', 'Animation', "EntityLook", "EntityRelativeMove", "PlayerInfo", 
-                "EntityLookAndRelativeMove", "EntityHeadLook", "EntityMetadata"].includes(name)))
-            console.log(clientName + "                ".substr(0, 16-clientName.length), "~~ S->C ~~ " + state + " ~ " + name + (player.usePacketCompression && data.b.length >= 500 ? " ~~ Compressed: Saved " + (data.b.length - bufferObject.b.length) + " bytes" : " ~~ Not Compressed"));
-    } catch(e) {
-        console.error(e.stack);
+  try {
+    var dataDuplicate = createBufferObject();
+    prependData(dataDuplicate, data.b);
+    var bufferObject = createBufferObject();
+    var temp = createBufferObject();
+    writeVarInt(temp, packetID); // Packet ID
+    prependData(dataDuplicate, temp.b);
+    if (player.usePacketCompression) {
+      if (data.b.length >= 500) {
+        temp = createBufferObject(); // Buffer containing uncompressed packet length
+        writeVarInt(temp, dataDuplicate.b.length); // Uncompressed packet length
+        dataDuplicate.b = zlib.deflateSync(dataDuplicate.b); // Compress packet
+        prependData(dataDuplicate, temp.b); // Put uncompressed packet length before packet data
+        writeVarInt(bufferObject, dataDuplicate.b.length); // Write length of uncompressed packet length + compressed data and packet ID length 
+        appendData(bufferObject, dataDuplicate.b); // Put that length before anything else
+      } else {
+        temp = createBufferObject(); // Buffer containing uncompressed packet length
+        writeVarInt(temp, 0); // Uncompressed packet length (Zero since uncompressed)
+        prependData(dataDuplicate, temp.b); // Put uncompressed packet length before packet data
+        writeVarInt(bufferObject, dataDuplicate.b.length); // Write length of uncompressed packet length + compressed data and packet ID length 
+        appendData(bufferObject, dataDuplicate.b); // Put that length before anything else
+      }
+    } else {
+      writeVarInt(bufferObject, dataDuplicate.b.length); // Length
+      appendData(bufferObject, dataDuplicate.b);
     }
+
+    if (player.useEncryption) {
+      player.cipher.write(bufferObject.b);
+    } else {
+      player.tcpSocket.write(bufferObject.b);
+    }
+    const clientName = player.username || player.tcpSocket.remoteAddress.substr(7);
+    if (!(['ChunkData', 'ChatMessage', 'KeepAlive', 'Animation', "EntityLook", "EntityRelativeMove", "PlayerInfo",
+      "EntityLookAndRelativeMove", "EntityHeadLook", "EntityMetadata"].includes(name)))
+      console.log(clientName + "                ".substr(0, 16 - clientName.length), "~~ S->C ~~ " + state + " ~ " + name + (player.usePacketCompression && data.b.length >= 500 ? " ~~ Compressed: Saved " + (data.b.length - bufferObject.b.length) + " bytes" : " ~~ Not Compressed"));
+  } catch (e) {
+    console.error(e.stack);
+  }
 }
 
 /**
@@ -826,7 +796,7 @@ export function writePacket(packetID, data, player, state, name) {
  * The buffer object
  */
 export function createBufferObject() {
-    return {b: Buffer.from([])};
+  return { b: Buffer.from([]) };
 }
 
 /**
@@ -835,18 +805,18 @@ export function createBufferObject() {
  * @param {Buffer} buffer 
  */
 export function performTwosCompliment(buffer) {
-    var carry = true;
-    var i, newByte, value;
-    for (i = buffer.length - 1; i >= 0; --i) {
-        value = buffer.readUInt8(i);
-        newByte = ~value & 0xff;
-        if (carry) {
-            carry = newByte === 0xff;
-            buffer.writeUInt8(carry ? 0 : (newByte + 1), i);
-        } else {
-            buffer.writeUInt8(newByte, i);
-        }
+  var carry = true;
+  var i, newByte, value;
+  for (i = buffer.length - 1; i >= 0; --i) {
+    value = buffer.readUInt8(i);
+    newByte = ~value & 0xff;
+    if (carry) {
+      carry = newByte === 0xff;
+      buffer.writeUInt8(carry ? 0 : (newByte + 1), i);
+    } else {
+      buffer.writeUInt8(newByte, i);
     }
+  }
 }
 
 /**
@@ -855,12 +825,12 @@ export function performTwosCompliment(buffer) {
  * @param {Buffer} hash 
  */
 export function minecraftHexDigest(hash) { //TODO: Clean-up
-    var negative = hash.readInt8(0) < 0;
-    if (negative) performTwosCompliment(hash);
-    var digest = hash.toString('hex');
-    digest = digest.replace(/^0+/g, '');
-    if (negative) digest = '-' + digest;
-    return digest;
+  var negative = hash.readInt8(0) < 0;
+  if (negative) performTwosCompliment(hash);
+  var digest = hash.toString('hex');
+  digest = digest.replace(/^0+/g, '');
+  if (negative) digest = '-' + digest;
+  return digest;
 }
 
 /**
@@ -870,158 +840,222 @@ export function minecraftHexDigest(hash) { //TODO: Clean-up
  * @return {Object} nbtStructure
  */
 export function readNBT(data) {
-    var nbtStructure = {};
-    var readIndex = 0;
-    /**
-     * @type {Array<string>}
-     */
-    var currentCompound = [];
-    var nbtBackup = [];
-    var inArray = false;
-    var arrayIndex = 0;
-    var currentArrayType = 0;
-    var currentArrayLength = 0;
-    var currentArrayName = "";
+  var nbtStructure = {};
+  var readIndex = 0;
+  /**
+   * @type {Array<string>}
+   */
+  var currentCompound = [];
+  var nbtBackup = [];
+  var inArray = false;
+  var arrayIndex = 0;
+  var currentArrayType = 0;
+  var currentArrayLength = 0;
+  var currentArrayName = "";
 
-    /**
-     * @param {number} bytes 
-     * @return {Buffer} data;
-     */
-    function readBytes(bytes) {
-        var readData = data.slice(readIndex, readIndex + bytes);
-        readIndex += bytes;
-        return readData;
+  /**
+   * @param {number} bytes 
+   * @return {Buffer} data;
+   */
+  function readBytes(bytes) {
+    var readData = data.slice(readIndex, readIndex + bytes);
+    readIndex += bytes;
+    return readData;
+  }
+
+  /**
+   * @param {string} name 
+   * @param {any} value 
+   */
+  function setValue(name, value) {
+    //console.log(currentCompound.join(".") + "." + name);
+    var fullPath = "";
+    currentCompound.forEach(child => {
+      fullPath += `["${child}"]`;
+      if (eval("nbtStructure" + fullPath) == undefined) eval("nbtStructure" + fullPath + " = {};");
+    });
+    fullPath += `["${name}"]`;
+    if (typeof value == "object") {
+      value = JSON.stringify(value);
+    }
+    var command = "nbtStructure" + fullPath + " = " + value + ";";
+    eval(command);
+  }
+
+  function endArray() {
+    var name = currentArrayName;
+    currentArrayName = nbtBackup.pop();
+    var length = currentArrayLength;
+    arrayIndex = nbtBackup.pop();
+    currentCompound = nbtBackup.pop();
+    currentArrayLength = nbtBackup.pop();
+    currentArrayType = nbtBackup.pop();
+    inArray = nbtBackup.pop();
+    var generatedStructure = nbtStructure;
+    nbtStructure = nbtBackup.pop();
+    var array = [];
+    for (var i = 0; i < length; i++) {
+      array.push(generatedStructure[i]);
+    }
+    setValue(name, array);
+  }
+
+  function readNext() {
+    if (inArray && currentArrayLength == arrayIndex) endArray();
+    var typeID;
+    var nameLength;
+    var name;
+    if (inArray) {
+      typeID = currentArrayType;
+      currentCompound.unshift(arrayIndex);
+      name = currentCompound.pop();
+      if (currentCompound.length == 0) arrayIndex++;
+      if (typeID == 10 && currentCompound.length > 0) {
+        typeID = readBytes(1).readInt8();
+        if (typeID == 0) {
+          currentCompound.pop();
+          return;
+        };
+        nameLength = readBytes(2).readUInt16BE(0);
+        name = readBytes(nameLength).toString('utf-8');
+      }
+    } else {
+      typeID = readBytes(1).readInt8();
+      if (typeID == 0) {
+        currentCompound.pop();
+        return;
+      };
+      nameLength = readBytes(2).readUInt16BE(0);
+      name = readBytes(nameLength).toString('utf-8');
     }
 
-    /**
-     * @param {string} name 
-     * @param {any} value 
-     */
-    function setValue(name, value) {
-        //console.log(currentCompound.join(".") + "." + name);
-        var fullPath = "";
-        currentCompound.forEach(child => {
-            fullPath += `["${child}"]`;
-            if(eval("nbtStructure" + fullPath) == undefined) eval("nbtStructure" + fullPath + " = {};");
-        });
-        fullPath += `["${name}"]`;
-        if(typeof value == "object") {
-            value = JSON.stringify(value);
+    var types = {
+      0: () => {
+        currentCompound.pop();
+      },
+      1: () => {
+        var data = readBytes(1);
+        return setValue(name, data.readInt8(0));
+      },
+      2: () => {
+        var data = readBytes(2);
+        return setValue(name, data.readInt16BE(0));
+      },
+      3: () => {
+        var data = readBytes(4);
+        return setValue(name, data.readInt32BE(0));
+      },
+      4: () => {
+        var data = readBytes(8);
+        var low = data.readInt32BE(4);
+        var n = data.readInt32BE() * 4294967296.0 + low;
+        if (low < 0) n += 4294967296;
+        return setValue(name, n);
+      },
+      5: () => {
+        var data = readBytes(4);
+        return setValue(name, data.readFloatBE());
+      },
+      6: () => {
+        var data = readBytes(8);
+        return setValue(name, data.readDoubleBE());
+      },
+      8: () => {
+        var length = readBytes(2).readUInt16BE();
+        var string = readBytes(length).toString('utf-8');
+        return setValue(name, `"${string}"`);
+      },
+      9: () => {
+        var listType = readBytes(1).readInt8();
+        var length = readBytes(4).readInt32BE();
+        nbtBackup.push(nbtStructure);
+        nbtStructure = {};
+        nbtBackup.push(inArray);
+        nbtBackup.push(currentArrayType);
+        nbtBackup.push(currentArrayLength);
+        nbtBackup.push(currentCompound);
+        nbtBackup.push(arrayIndex);
+        nbtBackup.push(currentArrayName);
+        inArray = true;
+        arrayIndex = listType == 10 ? -1 : 0;
+        currentArrayType = listType;
+        currentArrayLength = length;
+        currentArrayName = name;
+        currentCompound = [];
+      },
+      10: () => {
+        if (name !== "") currentCompound.push(name);
+      }
+    }
+    types[typeID]();
+  }
+  while (readIndex < data.length) {
+    readNext();
+  }
+
+  return nbtStructure;
+}
+
+export function blockIdToStateId(version, id, properties) {
+  id = id.toLowerCase();
+  const blocks = require(`./generated_data/${version}/reports/blocks.json`);
+
+  const block = blocks[id];
+
+  if(!block)
+    return 0;
+
+  // Block has no properties
+  if (!block.properties) {
+    return block.states[0].id;
+
+  // Block has properties, but none were provided
+  } else if (!properties || Object.keys(properties) === 0) {
+    for (const state of block.states)
+      if (state.default)
+        return state.id;
+
+  // Check properties given with all states until match is found
+  } else {
+    // Validate properties
+    for (const prop of Object.keys(block.properties))
+      if (properties[prop]) {
+        properties[prop] = properties[prop].toLowerCase()
+        if (!block.properties[prop].includes(properties[prop]))
+          throw new Error(`Invalid property value ${properties[prop]} for ${prop} on block ${id}`);
+      } else {
+          throw new Error(`Missing property ${prop} on block ${id}`);
+      }
+
+
+    states:
+    for (const state of block.states) {
+      for (const prop of Object.keys(block.properties)) {
+        if (block.properties[prop] !== properties[prop]) {
+            break states;
         }
-        var command = "nbtStructure" + fullPath + " = " + value + ";";
-        eval(command);
+      }
+      return state;
     }
 
-    function endArray() {
-        var name = currentArrayName;
-        currentArrayName = nbtBackup.pop();
-        var length = currentArrayLength;
-        arrayIndex = nbtBackup.pop();
-        currentCompound = nbtBackup.pop();
-        currentArrayLength = nbtBackup.pop();
-        currentArrayType = nbtBackup.pop();
-        inArray = nbtBackup.pop();
-        var generatedStructure = nbtStructure;
-        nbtStructure = nbtBackup.pop();
-        var array = [];
-        for(var i = 0; i < length; i++) {
-            array.push(generatedStructure[i]);
-        }
-        setValue(name, array);
-    }
+    throw new Error(`Unknown state for given properties of ${id}`);
+  }
+}
 
-    function readNext() {
-        if(inArray && currentArrayLength == arrayIndex) endArray();
-        var typeID;
-        var nameLength;
-        var name;
-        if(inArray) {
-            typeID = currentArrayType;
-            currentCompound.unshift(arrayIndex);
-            name = currentCompound.pop();
-            if(currentCompound.length == 0) arrayIndex++;
-            if(typeID == 10 && currentCompound.length > 0) {
-                typeID = readBytes(1).readInt8();
-                if(typeID == 0) {
-                    currentCompound.pop();
-                    return;
+export function stateIdToBlockId(version, stateId) {
+    const blocks = require(`./generated_data/${version}/reports/blocks.json`);
+
+    for(let id of Object.keys(blocks)) {
+        const block = blocks[id];
+        for(let state of block.states) {
+            if (state.id === stateId) {
+                return {
+                    id,
+                    properties: state.properties
                 };
-                nameLength = readBytes(2).readUInt16BE(0);
-                name = readBytes(nameLength).toString('utf-8');
-            }
-        } else {
-            typeID = readBytes(1).readInt8();
-            if(typeID == 0) {
-                currentCompound.pop();
-                return;
-            };
-            nameLength = readBytes(2).readUInt16BE(0);
-            name = readBytes(nameLength).toString('utf-8');
-        }
-        
-        var types = {
-            0: () => {
-                currentCompound.pop();
-            },
-            1: () => {
-                var data = readBytes(1);
-                return setValue(name, data.readInt8(0));
-            },
-            2: () => {
-                var data = readBytes(2);
-                return setValue(name, data.readInt16BE(0));
-            },
-            3: () => {
-                var data = readBytes(4);
-                return setValue(name, data.readInt32BE(0));
-            },
-            4: () => {
-                var data = readBytes(8);
-                var low = data.readInt32BE(4);
-                var n = data.readInt32BE() * 4294967296.0 + low;
-                if (low < 0) n += 4294967296;
-                return setValue(name, n);
-            },
-            5: () => {
-                var data = readBytes(4);
-                return setValue(name, data.readFloatBE());
-            },
-            6: () => {
-                var data = readBytes(8);
-                return setValue(name, data.readDoubleBE());
-            },
-            8: () => {
-                var length = readBytes(2).readUInt16BE();
-                var string = readBytes(length).toString('utf-8');
-                return setValue(name, `"${string}"`);
-            },
-            9: () => {
-                var listType = readBytes(1).readInt8();
-                var length = readBytes(4).readInt32BE();
-                nbtBackup.push(nbtStructure);
-                nbtStructure = {};
-                nbtBackup.push(inArray);
-                nbtBackup.push(currentArrayType);
-                nbtBackup.push(currentArrayLength);
-                nbtBackup.push(currentCompound);
-                nbtBackup.push(arrayIndex);
-                nbtBackup.push(currentArrayName);
-                inArray = true;
-                arrayIndex = listType == 10 ? -1 : 0;
-                currentArrayType = listType;
-                currentArrayLength = length;
-                currentArrayName = name;
-                currentCompound = [];
-            },
-            10: () => {
-                if(name !== "") currentCompound.push(name);
             }
         }
-        types[typeID]();
-    }
-    while(readIndex < data.length) {
-        readNext();
     }
 
-    return nbtStructure;
+    return null;
 }

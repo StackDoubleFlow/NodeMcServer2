@@ -1,31 +1,8 @@
+import Chunk from "./Chunk";
+import * as utils from "../utils";
+import SuperflatGenerator from "./generators/SuperflatGenerator";
 var fs = require('fs');
-var utils = require('../utils.js');
 var zlib = require('zlib');
-
-const SECTION_HEIGHT = 16;
-const SECTION_WIDTH = 16;
-const SECTION_LENGTH = 16;
-
-export default class World {
-    constructor(path) {}
-
-    getChunkPosition(x, z) {}
-
-    getChunkPacket(x, z, fullChunk) {
-        const buf = utils.createBufferObject();
-
-        const chunkData = this.getChunkData(x, y);
-        
-        utils.writeInt(buf, x); // Chunk X
-        utils.writeInt(buf, y); // Chunk Y
-
-    }
-
-    getChunkData(x, y) {}
-
-    getChunkSection(x, y, z) {}
-}
-
 
 /**
  * A minecraft world represented in my own format
@@ -33,40 +10,60 @@ export default class World {
  * World format:
  * 
  */
-export default class World2 {
-    /**
-     * Loads a world
-     * 
-     * @param {string} filename 
-     */
-    constructor(path) {
-        // this.path = "./" + path;
-        // const fileExists = fs.existsSync(path);
-        // const isDirectory = fs.lstatSync(path).isDirectory();
-        // if(isDirectory) {
-        //     this.loadWorld();
-        // } else {
-        //     console.log("Unable to load world!");
-        // }
+export default class World {
+  /**
+   * Loads a world
+   * 
+   * @param {string} filename 
+   */
+  constructor(path) {
+    this.generator = new SuperflatGenerator(this);
+    this.chunks = [];
+
+    // Chunk data
+    for (var x = -7; x < 7; x++) {
+      for (var z = -7; z < 7; z++) {
+        this.getChunkPacket(x, z, true);
+      }
     }
 
-    getChunkPosition(x, z) {
+    this.difficulty = "creative";
+    this.difficultyLocked = false;
 
-    }
+    this.dimention = "overworld";
+    
+  }
 
-    getChunkPacket(x, z, fullChunk) {
-        const fullPacket = utils.createBufferObject();
-        utils.writeInt(fullPacket, x);
-        utils.writeInt(fullPacket, z);
-        utils.writeByte(fullPacket, 0);
-        utils.writeVarInt(fullPacket, 0x0000000000000001);
-        // Heightmaps
-        utils.writeHeightmap(fullPacket);
-        // Chunk data
-        this.getChunkData(x, z, fullPacket);
+  getTopMostBlock(x, z) {
+    let chunkX = Math.floor(x / 16);
+    let chunkZ = Math.floor(z / 16);
+    if (!this.chunks[chunkX]) return 0;
+    if (!this.chunks[chunkX][chunkZ]) return 0;
+    return this.chunks[chunkX][chunkZ].getTopMostBlock(x - chunkX * 16, z - chunkZ * 16);
+  }
 
-        if(false) {
-            // Biomes
-            for(let i = 0; i < 1024; i++) {
-                utils.writeInt(fullPacket, 0);
-            }
+  setBlockState(x, y, z, state) {
+    let chunkX = Math.floor(x / 16);
+    let chunkZ = Math.floor(z / 16);
+    
+    if (!this.chunks[chunkX]) this.chunks[chunkX] = [];
+    if (!this.chunks[chunkX][chunkZ])
+      this.chunks[chunkX][chunkZ] = new Chunk(chunkX, chunkZ, this);
+    this.chunks[chunkX][chunkZ].setBlockState(x - chunkX * 16, y, z - chunkZ * 16, state);
+  }
+
+  getChunkPacket(x, z, fullChunk) {
+    if (!this.chunks[x]) this.chunks[x] = [];
+    if (!this.chunks[x][z])
+      this.chunks[x][z] = new Chunk(x, z, this);
+
+    return this.chunks[x][z].getChunkData();
+  }
+
+  loadWorld() {
+    const levelFile = fs.readFileSync(this.path + "/level.dat");
+    const levelRaw = zlib.gunzipSync(levelFile);
+    const levelNbt = utils.readNBT(levelRaw);
+  }
+
+}

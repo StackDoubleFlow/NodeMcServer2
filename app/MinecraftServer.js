@@ -4,11 +4,11 @@ import ConsoleInterface from "./console/ConsoleInterface";
 import CommandHandler from "./api/commands/CommandHandler";
 import Item from "./world/Item";
 import EventManager from "./api/events/EventManager";
+import * as utils from "./utils";
 
 var net = require('net');
 var fs = require('fs');
 var crypto = require('crypto');
-var utils = require('./utils');
 var path = require('path');
 
 export default class MinecraftServer {
@@ -97,6 +97,8 @@ export default class MinecraftServer {
         this.timeOfLastKeepAlive = 0;
 
         setInterval(this.sendKeepAlive.bind(this), 15000);
+
+        // Commands
 
         this.commandHandler.addCommand(this, {name: "stop"}, (context) => {
             this.stop();
@@ -397,7 +399,7 @@ export default class MinecraftServer {
         this.writePacketToAll(playerInfo, 0x34, "play", "PlayerInfo");
 
         var removeEntities = utils.createBufferObject();
-        utils.writeVarInt(removeEntities, 1); // Number of entities
+        utils.writeVarInt(removeEntities, 1); // Number of players
         utils.writeVarInt(removeEntities, player.entityID)
         this.writePacketToAll(0x38, removeEntities, "play", "DestroyEntities");
 

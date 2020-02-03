@@ -1,7 +1,7 @@
 import Player from "../Player";
 import versions from "./versions/versions";
 
-var utils = require('./../utils');
+import * as utils from "../utils";
 
 /**
  * Manages all packets

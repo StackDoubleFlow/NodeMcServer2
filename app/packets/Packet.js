@@ -1,4 +1,4 @@
-const utils = require('../utils.js');
+import * as utils from "../utils";
 
 export default class Packet {
   constructor(packetId, def) {

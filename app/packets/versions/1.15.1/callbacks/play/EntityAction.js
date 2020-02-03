@@ -40,7 +40,7 @@ module.exports = (player, dataLength, entityId, actionId, jumpBoost) => {
   utils.writeByte(entityMetadata, player.getStatusMetaDataBitMask());
   utils.writeByte(entityMetadata, 6); // Pose (Index 6)
   utils.writeVarInt(entityMetadata, 18); // Pose Type
-  utils.writeVarInt(entityMetadata, player.isSneaking ? 3 : 0);
+  utils.writeVarInt(entityMetadata, player.isSneaking ? 5 : 0);
   utils.writeByte(entityMetadata, 0xff); // End of metadata
   player.server.writePacketToAll(0x44, entityMetadata, "play", "EntityMetadata", [player]);
 };

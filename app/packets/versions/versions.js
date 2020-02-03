@@ -85,4 +85,4 @@ const versions = {
   }
 }
 
-module.exports = versions;
+export default versions;

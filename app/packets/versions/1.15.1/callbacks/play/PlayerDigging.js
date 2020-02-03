@@ -11,20 +11,21 @@ module.exports = (player, dataLength) => {
   const pos = utils.readPosition(player);
   const face = utils.readBytes(player, 1);
 
-  if(status === 0) {
-      const blockBreak = utils.createBufferObject();
-      utils.writePosition(blockBreak, pos);
-      utils.writeVarInt(blockBreak, 0);
+  if (status === 0) {
+    const blockBreak = utils.createBufferObject();
+    utils.writePosition(blockBreak, pos);
+    utils.writeVarInt(blockBreak, 0);
 
-      const blockBreakParticle = utils.createBufferObject();
-      utils.writeInt(blockBreakParticle, 2001);
-      utils.writePosition(blockBreakParticle, pos);
-      utils.writeInt(blockBreakParticle, 1);
-      utils.writeByte(blockBreakParticle, 0);
+    const blockBreakParticle = utils.createBufferObject();
+    utils.writeInt(blockBreakParticle, 2001);
+    utils.writePosition(blockBreakParticle, pos);
+    utils.writeInt(blockBreakParticle, 1);
+    utils.writeByte(blockBreakParticle, 0);
 
-      player.server.writePacketToAll(0x0C, blockBreak, "play", "BlockUpdate", [player]);
-      player.server.writePacketToAll(0x23, blockBreakParticle, "play", "Effect", [player]);
+    player.server.writePacketToAll(0x0C, blockBreak, "play", "BlockUpdate", [player]);
+    player.server.writePacketToAll(0x23, blockBreakParticle, "play", "Effect", [player]);
+    player.server.world.setBlockState(pos.x, pos.x, pos.z, 0);
   }
-  
-  
+
+
 };

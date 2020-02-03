@@ -8,7 +8,6 @@ import ConsoleInterface from "./console/ConsoleInterface";
 import Packet from "./packets/Packet";
 import PacketManager from "./packets/PacketManager";
 import Block from "./world/Block";
-import BlockPalette from "./world/BlockPalette";
 import Chunk from "./world/Chunk";
 import Item from "./world/Item";
 import Location from "./world/Location";
@@ -31,7 +30,6 @@ module.exports = {
     Packet,
     PacketManager,
     Block,
-    BlockPalette,
     Chunk,
     Item,
     Location,

@@ -23,7 +23,7 @@ export default class Player {
         /**
          * @type {Location}
          */
-        this.location = new Location(server.world, 0, 0, 0, 0, 0);
+        this.location = new Location(server.world, 0, server.world.getTopMostBlock(0, 0) + 1, 0, 0, 0);
         /**
          * The player's network state
          * @type {string}
@@ -118,6 +118,7 @@ export default class Player {
         this.isSneaking = false;
         this.isSprinting = false;
         this.gamemode = "creative";
+        this.inventory = [];
 
         this.tcpSocket.on('readable', this.onStreamReadable.bind(this));
         this.tcpSocket.on('end', this.onStreamEnd.bind(this));
