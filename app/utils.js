@@ -833,6 +833,150 @@ export function minecraftHexDigest(hash) { //TODO: Clean-up
   return digest;
 }
 
+export function readNBTFromPlayer(player) {
+  var nbtStructure = {};
+  /**
+   * @type {Array<string>}
+   */
+  var currentCompound = [];
+  var nbtBackup = [];
+  var inArray = false;
+  var arrayIndex = 0;
+  var currentArrayType = 0;
+  var currentArrayLength = 0;
+  var currentArrayName = "";
+
+  /**
+   * @param {string} name 
+   * @param {any} value 
+   */
+  function setValue(name, value) {
+    //console.log(currentCompound.join(".") + "." + name);
+    var fullPath = "";
+    currentCompound.forEach(child => {
+      fullPath += `["${child}"]`;
+      if (eval("nbtStructure" + fullPath) == undefined) eval("nbtStructure" + fullPath + " = {};");
+    });
+    fullPath += `["${name}"]`;
+    if (typeof value == "object") {
+      value = JSON.stringify(value);
+    }
+    var command = "nbtStructure" + fullPath + " = " + value + ";";
+    eval(command);
+  }
+
+  function endArray() {
+    var name = currentArrayName;
+    currentArrayName = nbtBackup.pop();
+    var length = currentArrayLength;
+    arrayIndex = nbtBackup.pop();
+    currentCompound = nbtBackup.pop();
+    currentArrayLength = nbtBackup.pop();
+    currentArrayType = nbtBackup.pop();
+    inArray = nbtBackup.pop();
+    var generatedStructure = nbtStructure;
+    nbtStructure = nbtBackup.pop();
+    var array = [];
+    for (var i = 0; i < length; i++) {
+      array.push(generatedStructure[i]);
+    }
+    setValue(name, array);
+  }
+
+  function readNext() {
+    if (inArray && currentArrayLength == arrayIndex) endArray();
+    var typeID;
+    var nameLength;
+    var name;
+    if (inArray) {
+      typeID = currentArrayType;
+      currentCompound.unshift(arrayIndex);
+      name = currentCompound.pop();
+      if (currentCompound.length == 0) arrayIndex++;
+      if (typeID == 10 && currentCompound.length > 0) {
+        typeID = readBytes(player, 1).readInt8();
+        if (typeID == 0) {
+          currentCompound.pop();
+          return;
+        };
+        nameLength = readBytes(player, 2).readUInt16BE(0);
+        name = readBytes(player, nameLength).toString('utf-8');
+      }
+    } else {
+      typeID = readBytes(player, 1).readInt8();
+      if (typeID == 0) {
+        currentCompound.pop();
+        return;
+      };
+      nameLength = readBytes(player, 2).readUInt16BE(0);
+      name = readBytes(player, nameLength).toString('utf-8');
+    }
+
+    var types = {
+      0: () => {
+        currentCompound.pop();
+      },
+      1: () => {
+        var data = readBytes(player, 1);
+        return setValue(name, data.readInt8(0));
+      },
+      2: () => {
+        var data = readBytes(player, 2);
+        return setValue(name, data.readInt16BE(0));
+      },
+      3: () => {
+        var data = readBytes(player, 4);
+        return setValue(name, data.readInt32BE(0));
+      },
+      4: () => {
+        var data = readBytes(player, 8);
+        var low = data.readInt32BE(4);
+        var n = data.readInt32BE() * 4294967296.0 + low;
+        if (low < 0) n += 4294967296;
+        return setValue(name, n);
+      },
+      5: () => {
+        var data = readBytes(player, 4);
+        return setValue(name, data.readFloatBE());
+      },
+      6: () => {
+        var data = readBytes(player, 8);
+        return setValue(name, data.readDoubleBE());
+      },
+      8: () => {
+        var length = readBytes(player, 2).readUInt16BE();
+        var string = readBytes(player, length).toString('utf-8');
+        return setValue(name, `"${string}"`);
+      },
+      9: () => {
+        var listType = readBytes(player, 1).readInt8();
+        var length = readBytes(player, 4).readInt32BE();
+        nbtBackup.push(nbtStructure);
+        nbtStructure = {};
+        nbtBackup.push(inArray);
+        nbtBackup.push(currentArrayType);
+        nbtBackup.push(currentArrayLength);
+        nbtBackup.push(currentCompound);
+        nbtBackup.push(arrayIndex);
+        nbtBackup.push(currentArrayName);
+        inArray = true;
+        arrayIndex = listType == 10 ? -1 : 0;
+        currentArrayType = listType;
+        currentArrayLength = length;
+        currentArrayName = name;
+        currentCompound = [];
+      },
+      10: () => {
+        if (name !== "") currentCompound.push(name);
+      }
+    }
+    types[typeID]();
+  }
+  readNext();
+
+  return nbtStructure;
+}
+
 /**
  * Reads NBT data and puts it into an object
  * 

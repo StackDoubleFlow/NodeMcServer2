@@ -16,7 +16,8 @@ export default class World {
    * 
    * @param {string} filename 
    */
-  constructor(path) {
+  constructor(server, path) {
+    this.server = server;
     this.generator = new SuperflatGenerator(this);
     this.chunks = [];
 
@@ -50,6 +51,21 @@ export default class World {
     if (!this.chunks[chunkX][chunkZ])
       this.chunks[chunkX][chunkZ] = new Chunk(chunkX, chunkZ, this);
     this.chunks[chunkX][chunkZ].setBlockState(x - chunkX * 16, y, z - chunkZ * 16, state);
+
+    const blockChange = utils.createBufferObject();
+    utils.writePosition(blockChange, {x, y, z});
+    utils.writeVarInt(blockChange, state);
+    this.server.writePacketToAll(0x0C, blockChange, "play", "BlockChange");
+  }
+
+  getBlockState(x, y, z) {
+    let chunkX = Math.floor(x / 16);
+    let chunkZ = Math.floor(z / 16);
+    
+    if (!this.chunks[chunkX]) this.chunks[chunkX] = [];
+    if (!this.chunks[chunkX][chunkZ])
+      this.chunks[chunkX][chunkZ] = new Chunk(chunkX, chunkZ, this);
+    return this.chunks[chunkX][chunkZ].getBlockState(x - chunkX * 16, y, z - chunkZ * 16);
   }
 
   getChunkPacket(x, z, fullChunk) {

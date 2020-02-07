@@ -73,13 +73,12 @@ export default class MinecraftServer {
 
         this.sendMessage("Loading world");
 
-        this.world = new World("test_world");
+        this.world = new World(this, "test_world");
 
         /**
          * @type {ConsoleInterface}
          */
         this.console = new ConsoleInterface(this);
-        Item.setRegistry(require("./generated_data/1.14/reports/registries.json")['minecraft:item']);
         /**
          * @type {CommandHandler}
          */

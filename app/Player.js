@@ -118,11 +118,40 @@ export default class Player {
         this.isSneaking = false;
         this.isSprinting = false;
         this.gamemode = "creative";
-        this.inventory = [];
+        this.inventory = new Array(46);
+        this.enderChest = new Array(27);
 
         this.tcpSocket.on('readable', this.onStreamReadable.bind(this));
         this.tcpSocket.on('end', this.onStreamEnd.bind(this));
         this.tcpSocket.on('error', this.onStreamEnd.bind(this));
+    }
+
+    teleport(loc) {
+        // TODO: Validate location
+        this.location.x = loc.x;
+        this.location.x = loc.y;
+        this.location.x = loc.z;
+        this.location.x = loc.yaw;
+        this.location.x = loc.pitch;
+
+        const teleportPacket = utils.createBufferObject();
+        utils.writeVarInt(teleportPacket, this.entityID);
+        utils.writeDouble(teleportPacket, loc.x);
+        utils.writeDouble(teleportPacket, loc.y);
+        utils.writeDouble(teleportPacket, loc.z);
+        utils.writeDouble(teleportPacket, loc.yaw); 
+        utils.writeDouble(teleportPacket, loc.pitch);
+        utils.writeByte(teleportPacket, 0);
+        this.server.writePacketToAll(0x57, teleportPacket, "play", "EntityTeleport", [this]);
+ 
+        const teleportSelfPacket = utils.createBufferObject();
+        utils.writeDouble(teleportSelfPacket, loc.x);
+        utils.writeDouble(teleportSelfPacket, loc.y);
+        utils.writeDouble(teleportSelfPacket, loc.z);
+        utils.writeFloat(teleportSelfPacket, loc.yaw);
+        utils.writeFloat(teleportSelfPacket, loc.pitch); 
+        utils.writeByte(teleportSelfPacket, 0);
+        utils.writePacket(0x36, teleportSelfPacket, this, "play", "PlayerPositionAndLook");
     }
 
     setGamemode(gamemode) {

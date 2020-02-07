@@ -50,6 +50,8 @@ export default class PacketManager {
          * @type {Object<string, Object<string, Function>>}
          */
         this.callbacks = versionInfo.callbacks;
+
+        this.reloadVersion()
     }
     
     /**
@@ -61,6 +63,36 @@ export default class PacketManager {
      */
     getPacketCallback(state, packetId) {
         return this.callbacks[this.inboundPackets[state][packetId]].bind(this);
+    }
+
+    reloadVersion() {
+        const fs = require("fs");
+        const path = require("path");
+        const walk = function(dir) {
+            var results = [];
+            var list = fs.readdirSync(dir);
+            list.forEach(function(file) {
+                file = dir + '/' + file;
+                var stat = fs.statSync(file);
+                if (stat && stat.isDirectory()) { 
+                    /* Recurse into a subdirectory */
+                    results = results.concat(walk(file));
+                } else { 
+                    /* Is a file */
+                    results.push(file);
+                }
+            });
+            return results;
+        }
+
+        fs.watch.bind(this)(path.join(__dirname, `./versions/${this.versionName}/callbacks/play`), {}, (event, file) => {
+            const reqPath = require.resolve("./" + path.join(`./versions/${this.versionName}/callbacks/play`, file));
+            delete require.cache[reqPath];
+            
+            const newMod = require(reqPath);
+            
+            this.callbacks.play[file.substr(0, file.length - 3)] = newMod;
+        });
     }
 
     /**

@@ -15,11 +15,23 @@ module.exports = (player, dataLength) => {
   const cursorZ = utils.readFloat(player);
   const insideBlock = utils.readBoolean(player);
   const blockId = utils.blockIdToStateId("1.15.2", "minecraft:wet_sponge");
-  console.log(location.x, location.y, location.z);
-  player.server.world.setBlockState(location.x, location.y += 1, location.z, blockId);
-
-  const blockChange = utils.createBufferObject();
-  utils.writePosition(blockChange, location);
-  utils.writeVarInt(blockChange, blockId);
-  player.server.writePacketToAll(0x0C, blockChange, "play", "BlockChange", [player]);
+  if (face == 0) { // -Y
+    location.y--;
+  } else if (face == 1) { // +Y
+    location.y++;
+  } else if (face == 2) { // -Z
+    location.z--;
+  } else if (face == 3) { // +Z
+    location.z++;
+  } else if (face == 4) { // -X
+    location.x--;
+  } else if (face == 5) { // +X
+    location.x++;
+  }
+  if (
+    Math.floor(player.location.x) == location.x &&
+    Math.floor(player.location.y) == location.y &&
+    Math.floor(player.location.z) == location.z
+  ) return;
+  player.server.world.setBlockState(location.x, location.y, location.z, blockId);
 };

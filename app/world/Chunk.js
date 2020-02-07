@@ -59,8 +59,8 @@ export default class Chunk {
 
   getBlockState(x, y, z) {
     const sectionY = Math.floor(y / 16);
-    if (!sections[sectionY]) return 0;
-    sections[sectionY].getBlockState(x, y - sectionY, z);
+    if (!this.sections[sectionY]) return 0;
+    return this.sections[sectionY].getBlockState(x, y - sectionY, z);
   }
 
   setBlockState(x, y, z, state) {
