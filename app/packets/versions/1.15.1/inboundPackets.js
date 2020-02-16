@@ -141,6 +141,37 @@ module.exports = {
         }
       ]
     },
+    0x12: {
+      name: "PlayerPositionAndLook",
+      parameters: [
+        {
+          name: "x",
+          type: "double"
+        },
+        {
+          name: "y",
+          type: "double"
+        },
+        {
+          name: "z",
+          type: "double"
+        },
+        {
+          name: "yaw",
+          type: "float"
+        },
+        {
+          name: "pitch",
+          type: "float"
+        },
+        {
+          name: "onGround",
+          type: "boolean"
+        }
+      ],
+      log: false,
+      auto: true
+    },
     0x13: {
       name: "PlayerLook",
       parameters: [
@@ -193,6 +224,35 @@ module.exports = {
         }
       ]
     },
+    0x1B: {
+      name: "EntityAction",
+      parameters: [
+        {
+          name: "entityId",
+          type: "varint"
+        },
+        {
+          name: "actionId",
+          type: "varint",
+          values: {
+            0: "startSneaking",
+            1: "stopSneaking",
+            2: "leaveBed",
+            3: "startSprinting",
+            4: "stopSprinting",
+            5: "startHorseJump",
+            6: "stopHorseJump",
+            7: "openHorseInventory",
+            8: "startFlyingWithElytra"
+          }
+        },
+        {
+          name: "jumpBoost",
+          type: "varint"
+        }
+      ],
+      auto: true
+    },
     0x2C: {
       name: "PlayerBlockPlacement",
       parameters: [
@@ -239,66 +299,6 @@ module.exports = {
           }
         }
       ]
-    },
-    0x1B: {
-      name: "EntityAction",
-      parameters: [
-        {
-          name: "entityId",
-          type: "varint"
-        },
-        {
-          name: "actionId",
-          type: "varint",
-          values: {
-            0: "startSneaking",
-            1: "stopSneaking",
-            2: "leaveBed",
-            3: "startSprinting",
-            4: "stopSprinting",
-            5: "startHorseJump",
-            6: "stopHorseJump",
-            7: "openHorseInventory",
-            8: "startFlyingWithElytra"
-          }
-        },
-        {
-          name: "jumpBoost",
-          type: "varint"
-        }
-      ],
-      auto: true
-    },
-    0x12: {
-      name: "PlayerPositionAndLook",
-      parameters: [
-        {
-          name: "x",
-          type: "double"
-        },
-        {
-          name: "y",
-          type: "double"
-        },
-        {
-          name: "z",
-          type: "double"
-        },
-        {
-          name: "yaw",
-          type: "float"
-        },
-        {
-          name: "pitch",
-          type: "float"
-        },
-        {
-          name: "onGround",
-          type: "boolean"
-        }
-      ],
-      log: false,
-      auto: true
     },
 
     // TODO
