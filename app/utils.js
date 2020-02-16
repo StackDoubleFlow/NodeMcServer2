@@ -839,6 +839,17 @@ export function minecraftHexDigest(hash) { //TODO: Clean-up
   return digest;
 }
 
+export function itemProtocolIdToItemId(version, protocolId) {
+  const items = require(`./generated_data/${version}/reports/registries.json`)["minecraft:item"].entries;
+  //console.log(items);
+  for (const name of Object.keys(items)) {
+    const id = items[name].protocol_id;
+    if (id == protocolId) return name;
+  }
+
+  return null
+}
+
 export function blockIdToStateId(version, id, properties) {
   id = id.toLowerCase();
   const blocks = require(`./generated_data/${version}/reports/blocks.json`);

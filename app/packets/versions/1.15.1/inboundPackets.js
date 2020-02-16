@@ -253,6 +253,19 @@ module.exports = {
       ],
       auto: true
     },
+    0x26: {
+      name: "CreativeInventoryAction",
+      parameters: [
+        {
+          name: "slot",
+          type: "short"
+        },
+        {
+          name: "clickedItem",
+          type: "slot"
+        }
+      ]
+    },
     0x2C: {
       name: "PlayerBlockPlacement",
       parameters: [
@@ -331,7 +344,6 @@ module.exports = {
     0x23: placeholder("HeldItemChange"),
     0x24: placeholder("UpdateCommandBlock"),
     0x25: placeholder("UpdateCommandBlockMinecart"),
-    0x26: placeholder("CreativeInventoryAction"),
     0x27: placeholder("UpdateJigsawBlock"),
     0x28: placeholder("UpdateStructureBlock"),
     0x29: placeholder("UpdateSign"),
