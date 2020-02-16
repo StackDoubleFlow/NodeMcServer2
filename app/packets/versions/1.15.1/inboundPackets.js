@@ -159,7 +159,22 @@ module.exports = {
       ]
     },
     0x19: {
-
+      name: "PlayerAbilities",
+      parameters: [
+        {
+          name: "flags",
+          type: "byte"
+        },
+        {
+          name: "flyingSpeed",
+          type: "float"
+        },
+        {
+          name: "walkingSpeed",
+          type: "float"
+        }
+      ],
+      auto: true
     },
     0x1A: {
       name: "PlayerDigging",
