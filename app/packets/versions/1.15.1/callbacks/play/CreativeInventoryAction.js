@@ -1,10 +1,11 @@
-import Player from "../../../../../Player";
+import Client from "../../../../../Client";
 import Item from "../../../../../world/Item";
+import { readNBTFromPlayer } from "../../../../../nbt";
 
 const utils = require("../../../../../utils");
 
 /**
- * @param {Player} player
+ * @param {Client} player
  * @param {number} dataLength
  */
 module.exports = (player, dataLength) => {
@@ -19,7 +20,7 @@ module.exports = (player, dataLength) => {
   
   const itemID = utils.readVarInt(player);
   const itemCount = utils.readVarInt(player);
-  const nbt = utils.readNBT(player);
+  const nbt = readNBTFromPlayer(player);
   player.inventory[slot] = new Item(utils.stateIdToBlockId("1.15.2", itemID), itemCount);
   console.log(player.inventory);
 };

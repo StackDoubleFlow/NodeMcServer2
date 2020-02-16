@@ -10,7 +10,7 @@ var net = require('net');
 var utils = require('./utils');
 var crypto = require('crypto');
 
-export default class Player {
+export default class Client {
     /**
      * Initializes a player object
      * 

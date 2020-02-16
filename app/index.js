@@ -14,7 +14,7 @@ import Location from "./world/Location";
 import Position from "./world/Position";
 import World from "./world/World";
 import MinecraftServer from "./MinecraftServer";
-import Player from "./Player";
+import Client from "./Client";
 
 import versions from "./packets/versions/versions";
 import utils from "./utils";
@@ -36,7 +36,7 @@ module.exports = {
     Position,
     World,
     MinecraftServer,
-    Player,
+    Client,
     utils
 };
 

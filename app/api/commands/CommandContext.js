@@ -1,7 +1,7 @@
 import CommandHandler from "./CommandHandler";
 import CommandExecutor from "./CommandExecutor";
 import MinecraftServer from "./../../MinecraftServer";
-import Player from "./../../Player";
+import Client from "./../../Client";
 
 export default class CommandContext {
 
@@ -26,7 +26,7 @@ export default class CommandContext {
          */
         this.sender = sender;
         /**
-         * @type {Player}
+         * @type {Client}
          */
         this.player = sender;
         /**
@@ -44,7 +44,7 @@ export default class CommandContext {
     }
 
     isSenderPlayer() {
-        return this.sender instanceof Player;
+        return this.sender instanceof Client;
     }
 
     isSenderServer() {

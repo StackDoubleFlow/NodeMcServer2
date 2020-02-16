@@ -1,4 +1,4 @@
-import Player from "../../../../../Player";
+import Client from "../../../../../Client";
 
 const utils = require("../../../../../utils");
 

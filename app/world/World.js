@@ -1,5 +1,6 @@
 import Chunk from "./Chunk";
 import * as utils from "../utils";
+import { readNBT } from "../nbt";
 import SuperflatGenerator from "./generators/SuperflatGenerator";
 var fs = require('fs');
 var zlib = require('zlib');
@@ -32,7 +33,46 @@ export default class World {
     this.difficultyLocked = false;
 
     this.dimention = "overworld";
+    this.worldPath = "./server_data/worlds/test_world/";
+
+    this.gamerules = {
+      announceAdvancements: true,
+      disableElytraMovementCheck: false,
+      disableRaids: false,
+      doLimitedCrafting: false,
+      doPatrolSpawning: true,
+      doTraderSpawning: true,
+      logAdminCommands: true,
+      maxEntityCramming: 24,
+      reducedDebugInfo: false,
+      spectatorsGenerateChunks: true,
+      commandBlockOutput: true,
+      doDaylightCycle: true,
+      doEntityDrops: true,
+      doFireTick: true,
+      doInsomnia: true,
+      doImmediateRespawn: false,
+      doMobLoot: true,
+      doMobSpawning: true,
+      doTileDrops: true,
+      doWeatherCycle: true,
+      drowningDamage: true,
+      fallDamage: true,
+      fireDamage: true,
+      keepInventory: false,
+      maxCommandChainLength: 65536,
+      mobGriefing: true,
+      naturalRegeneration: true,
+      randomTickSpeed: 3,
+      sendCommandFeedback: true,
+      showDeathMessages: true,
+      spawnRadius: 10
+    };
     
+    const bigtest = fs.readFileSync("./bigtest.nbt");
+    const uncomressedBigtest = zlib.gunzipSync(bigtest);
+    //console.log(readNBT(uncomressedBigtest));
+    this.loadWorld();
   }
 
   getTopMostBlock(x, z) {
@@ -77,9 +117,43 @@ export default class World {
   }
 
   loadWorld() {
-    const levelFile = fs.readFileSync(this.path + "/level.dat");
-    const levelRaw = zlib.gunzipSync(levelFile);
-    const levelNbt = utils.readNBT(levelRaw);
+    // const levelFile = fs.readFileSync(this.path + "/level.dat");
+    // const levelRaw = zlib.gunzipSync(levelFile);
+    // const levelNbt = readNBT(levelRaw);
+    const regionFolderPath = this.worldPath + "region/";
+    const regionFileNames = fs.readdirSync(regionFolderPath);
+    for (const fileName of regionFileNames) {
+      const rawFile = fs.readFileSync(regionFolderPath + fileName);
+      // const regionX = fileName.split(".")[1];
+      // const regionZ = fileName.split(".")[2];
+      for (let chunkZ = 0; chunkZ < 32; chunkZ++) {
+        for (let chunkX = 0; chunkX < 32; chunkX++) {
+          const locationOffset = 4 * ((chunkX & 31) + (chunkZ & 31) * 32);
+          const offset = rawFile.readUIntBE(locationOffset, 3) * 4096;
+          if (offset == 0) continue;
+          // const sectorCount = rawFile.readInt8(locationOffset + 3);
+          const length = rawFile.readUInt32BE(offset);
+          const compressionType = rawFile.readInt8(offset + 4);
+          const rawChunkData = rawFile.slice(offset + 5, (offset + 5) + (length - 1));
+          let chunkData;
+          if (compressionType == 2) {
+            chunkData = zlib.inflateSync(rawChunkData);
+          } else {
+            console.error("Unable to load chunk: chunk data is compressed wrongly!");
+            console.error("Chunk was compressed using type " + compressionType);
+            continue;
+          }
+          this.loadChunk(chunkData);
+        }
+      }
+    }
+  }
+
+  loadChunk(chunkData) {
+    //console.log(chunkData.toString("hex"));
+    fs.writeFileSync("test.nbt", chunkData);
+    const chunkNbt = readNBT(chunkData)[""];
+    //console.log(chunkNbt.Level.xPos, chunkNbt.Level.zPos);
   }
 
 }

@@ -1,4 +1,4 @@
-import Player from "./Player";
+import Client from "./Client";
 import World from "./world/World";
 import ConsoleInterface from "./console/ConsoleInterface";
 import CommandHandler from "./api/commands/CommandHandler";
@@ -21,7 +21,7 @@ export default class MinecraftServer {
         this.sendMessage("Starting server...");
         this.tcpServer = net.createServer(this.onClientConnected.bind(this));
         /**
-         * @type {Array<Player>}
+         * @type {Array<Client>}
          */
         this.onlinePlayers = [];
 
@@ -298,13 +298,13 @@ export default class MinecraftServer {
      * @param {net.Socket} socket 
      */
     onClientConnected(socket) {
-        var player = new Player(socket, this);
+        var player = new Client(socket, this);
     }
 
     /**
      * Gets called whenever a player connects
      * 
-     * @param {Player} player 
+     * @param {Client} player 
      */
     onPlayerConnected(player) {
         this.onlinePlayers.push(player);
@@ -349,7 +349,7 @@ export default class MinecraftServer {
     /**
      * Gets called whenever a player disconnects
      * 
-     * @param {Player} player 
+     * @param {Client} player 
      */
     onPlayerDisconnected(player) {
         this.onlinePlayers.forEach((onlinePlayer, i) => {
@@ -427,7 +427,7 @@ export default class MinecraftServer {
      * The state of the packet used for logging
      * @param {string} name
      * The name of the packet used for logging
-     * @param {Array<Player>} exceptions
+     * @param {Array<Client>} exceptions
      * Players to not send the packet to
      */
     writePacketToAll(packetID, data, state, name, exceptions=[]) {

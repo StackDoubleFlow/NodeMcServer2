@@ -1,7 +1,7 @@
 import MinecraftServer from "../../MinecraftServer";
 import CommandExecutor from "./CommandExecutor";
 import CommandContext from "./CommandContext";
-import Player from "./../../Player";
+import Client from "./../../Client";
 
 export default class CommandHandler {
     constructor(server) {
@@ -48,7 +48,7 @@ export default class CommandHandler {
         try {
             
             if (!this.commands.has(label)) {
-                if(sender instanceof Player) sender.sendMessage({ text: "Unknown command", color: "red" });
+                if(sender instanceof Client) sender.sendMessage({ text: "Unknown command", color: "red" });
                 return false;
             };
 

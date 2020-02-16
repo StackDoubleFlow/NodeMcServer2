@@ -1,4 +1,4 @@
-import Player from "../Player";
+import Client from "../Client";
 import versions from "./versions/versions";
 
 import * as utils from "../utils";
@@ -101,7 +101,7 @@ export default class PacketManager {
      * @param {number} data
      * @param {string} state
      * @param {number} packetId
-     * @param {Player} player
+     * @param {Client} player
      */
     handlePacket(length, state, packetId, player) {
         var packet = this.inboundPackets[state][packetId];

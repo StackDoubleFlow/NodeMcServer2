@@ -1,4 +1,4 @@
-import Player from "../../../../../Player";
+import Client from "../../../../../Client";
 
 const utils = require("../../../../../utils");
 const crypto = require("crypto");
@@ -6,7 +6,7 @@ const https = require('https');
 const http = require('http');
 
 /**
- * @param {Player} player
+ * @param {Client} player
  * @param {number} dataLength
  * @param {http.IncomingMessage} response
  * @param {string} data
@@ -83,7 +83,7 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
 
 
 /**
- * @param {Player} player
+ * @param {Client} player
  * @param {number} dataLength
  * @param {http.IncomingMessage} response
  * @param {string} data
@@ -202,7 +202,7 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
 }
 
 /**
- * @param {Player} player
+ * @param {Client} player
  * @param {number} dataLength
  */
 module.exports = (player, dataLength) => {

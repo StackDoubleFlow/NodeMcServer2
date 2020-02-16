@@ -1,5 +1,6 @@
-import Player from "./Player";
+import Client from "./Client";
 import Position from "./world/Position";
+import { readNBTFromPlayer } from "./nbt";
 
 var net = require('net');
 var crypto = require('crypto');
@@ -17,7 +18,7 @@ export const types = {
     ushort: readUShort,
     varint: readVarInt,
     varlong: readVarLong,
-    nbt: readNBT,
+    nbt: readNBTFromPlayer,
     "null": () => { },
     [null]: () => { }
   },
@@ -68,7 +69,7 @@ export const createGetRequest = (url) => new Promise((resolve, reject) => {
  * Used for compression
  * 
  * @param {number} length 
- * @param {Player} player
+ * @param {Client} player
  */
 export function inflate(length, player) {
   var data = player.internalBuffer.slice(player.internalIndex, player.internalIndex + length);
@@ -81,7 +82,7 @@ export function inflate(length, player) {
 /**
  * Resets the internal buffer of the player using the data from the player
  * 
- * @param {Player} player 
+ * @param {Client} player 
  * Player to read from
  */
 export function resetInternalBuffer(player) {
@@ -93,7 +94,7 @@ export function resetInternalBuffer(player) {
 /**
  * Resets the internal buffer of the player using the data from the player's decipher
  * 
- * @param {Player} player 
+ * @param {Client} player 
  * Player to read from
  */
 export function resetInternalBufferUsingDecipher(player) {
@@ -105,7 +106,7 @@ export function resetInternalBufferUsingDecipher(player) {
 /**
  * Reads a byte from the network stream
  * 
- * @param {Player} player
+ * @param {Client} player
  * Player to read from
  * @param {number} bytes
  * Number of bytes to read
@@ -131,7 +132,7 @@ export function writeType(type, player, ...args) {
 
 /**
  * @param {string} param
- * @param {Player} player
+ * @param {Client} player
  * Player to read from
  * @return {Array} arguments
  */
@@ -173,7 +174,7 @@ export function readParameter(arg, player) {
 
 /**
  * @param {object<string, *>} params
- * @param {Player} player
+ * @param {Client} player
  * Player to read from
  * @return {Array} arguments
  */
@@ -187,7 +188,7 @@ export function readParameters(params, player) {
 
 /**
  * @param {string} param
- * @param {Player} bufferObj
+ * @param {Client} bufferObj
  * Player to read from
  * @return {Array} arguments
  */
@@ -230,7 +231,7 @@ export function writeParameter(def, bufferObj, value) {
  * Player to write to
  * 
  * @param {object<string, *>} params
- * @param {Player} player
+ * @param {Client} player
  */
 export function writeParameters(params, player, ...values) {
   if (params.length !== values.length)
@@ -243,7 +244,7 @@ export function writeParameters(params, player, ...values) {
 /**
  * Reads a Unsigned Short from the network stream
  * 
- * @param {Player} player
+ * @param {Client} player
  * Player to read from
  * @return {number} value
  * Value of the Unsigned Shor that has been read
@@ -256,7 +257,7 @@ export function readUShort(player) {
 /**
  * Reads a Float from the network stream
  * 
- * @param {Player} player
+ * @param {Client} player
  * Player to read from
  * @return {number} value
  * Value of the Float that has been read
@@ -269,7 +270,7 @@ export function readFloat(player) {
 /**
  * Reads a Double from the network stream
  * 
- * @param {Player} player
+ * @param {Client} player
  * Player to read from
  * @return {number} value
  * Value of the Double that has been read
@@ -283,7 +284,7 @@ export function readDouble(player) {
 /**
  * Reads a Boolean from the network stream
  * 
- * @param {Player} player
+ * @param {Client} player
  * Player to read from
  * @return {number} value
  * Value of the Boolean that has been read
@@ -295,7 +296,7 @@ export function readBoolean(player) {
 
 /**
  * 
- * @param {Player} player 
+ * @param {Client} player 
  * Player to read from
  * @return {Position}
  */
@@ -314,7 +315,7 @@ export function readPosition(player) {
 
 /**
  * @param {Position} pos
- * @param {Player} bufferObject
+ * @param {Client} bufferObject
  */
 export function writePosition(bufferObject, pos) {
   var x = pos.x, y = pos.y, z = pos.z;
@@ -329,7 +330,7 @@ export function writePosition(bufferObject, pos) {
 /**
  * Reads a string from the network stream
  * 
- * @param {Player} player 
+ * @param {Client} player 
  * Player to read from
  * @param {number} n 
  * Maximum string length
@@ -345,7 +346,7 @@ export function readString(player, n) {
 /**
  * Reads a VarInt from the network stream
  * 
- * @param {Player} player
+ * @param {Client} player
  * Player to read from
  * @param {boolean} returnLength
  * @return {number} value
@@ -374,7 +375,7 @@ export function readVarInt(player, returnLength = false) {
 /**
  * Reads a VarLong from the network stream
  * 
- * @param {Player} player
+ * @param {Client} player
  * Player to read from
  * @return {number} value
  * Value of the VarLong that has been read
@@ -400,7 +401,7 @@ export function readVarLong(player) {
 /**
  * Reads a Long from the network stream
  * 
- * @param {Player} player
+ * @param {Client} player
  * Player to read from
  * @return {number} value
  * Value of the Long that has been read
@@ -480,7 +481,7 @@ export function writeAngle(bufferObject, degrees) {
 /**
  * Reads a byte array from the network stream
  * 
- * @param {Player} player
+ * @param {Client} player
  * Player to read from
  * @return {Array<number>} bytes
  * Bytes of byte array that has been read
@@ -651,7 +652,7 @@ export function writeUShort(bufferObject, value) {
 /**
  * Writes a UUID to the network stream
  * 
- * @param {Player} player
+ * @param {Client} player
  * The player containing the UUID
  * @param {Object} bufferObject
  * the object containing the buffer to write to
@@ -740,7 +741,7 @@ export function writeNumsToNLongBuffer(data, bitsPerNum, nums) {
  * The ID of the packet to write in the header
  * @param {Object} data 
  * The data of the packet
- * @param {Player} player
+ * @param {Client} player
  * The player to write to
  * @param {string} state
  * The state of the packet used for logging
@@ -831,313 +832,6 @@ export function minecraftHexDigest(hash) { //TODO: Clean-up
   digest = digest.replace(/^0+/g, '');
   if (negative) digest = '-' + digest;
   return digest;
-}
-
-export function readNBTFromPlayer(player) {
-  var nbtStructure = {};
-  /**
-   * @type {Array<string>}
-   */
-  var currentCompound = [];
-  var nbtBackup = [];
-  var inArray = false;
-  var arrayIndex = 0;
-  var currentArrayType = 0;
-  var currentArrayLength = 0;
-  var currentArrayName = "";
-
-  /**
-   * @param {string} name 
-   * @param {any} value 
-   */
-  function setValue(name, value) {
-    //console.log(currentCompound.join(".") + "." + name);
-    var fullPath = "";
-    currentCompound.forEach(child => {
-      fullPath += `["${child}"]`;
-      if (eval("nbtStructure" + fullPath) == undefined) eval("nbtStructure" + fullPath + " = {};");
-    });
-    fullPath += `["${name}"]`;
-    if (typeof value == "object") {
-      value = JSON.stringify(value);
-    }
-    var command = "nbtStructure" + fullPath + " = " + value + ";";
-    eval(command);
-  }
-
-  function endArray() {
-    var name = currentArrayName;
-    currentArrayName = nbtBackup.pop();
-    var length = currentArrayLength;
-    arrayIndex = nbtBackup.pop();
-    currentCompound = nbtBackup.pop();
-    currentArrayLength = nbtBackup.pop();
-    currentArrayType = nbtBackup.pop();
-    inArray = nbtBackup.pop();
-    var generatedStructure = nbtStructure;
-    nbtStructure = nbtBackup.pop();
-    var array = [];
-    for (var i = 0; i < length; i++) {
-      array.push(generatedStructure[i]);
-    }
-    setValue(name, array);
-  }
-
-  function readNext() {
-    if (inArray && currentArrayLength == arrayIndex) endArray();
-    var typeID;
-    var nameLength;
-    var name;
-    if (inArray) {
-      typeID = currentArrayType;
-      currentCompound.unshift(arrayIndex);
-      name = currentCompound.pop();
-      if (currentCompound.length == 0) arrayIndex++;
-      if (typeID == 10 && currentCompound.length > 0) {
-        typeID = readBytes(player, 1).readInt8();
-        if (typeID == 0) {
-          currentCompound.pop();
-          return;
-        };
-        nameLength = readBytes(player, 2).readUInt16BE(0);
-        name = readBytes(player, nameLength).toString('utf-8');
-      }
-    } else {
-      typeID = readBytes(player, 1).readInt8();
-      if (typeID == 0) {
-        currentCompound.pop();
-        return;
-      };
-      nameLength = readBytes(player, 2).readUInt16BE(0);
-      name = readBytes(player, nameLength).toString('utf-8');
-    }
-
-    var types = {
-      0: () => {
-        currentCompound.pop();
-      },
-      1: () => {
-        var data = readBytes(player, 1);
-        return setValue(name, data.readInt8(0));
-      },
-      2: () => {
-        var data = readBytes(player, 2);
-        return setValue(name, data.readInt16BE(0));
-      },
-      3: () => {
-        var data = readBytes(player, 4);
-        return setValue(name, data.readInt32BE(0));
-      },
-      4: () => {
-        var data = readBytes(player, 8);
-        var low = data.readInt32BE(4);
-        var n = data.readInt32BE() * 4294967296.0 + low;
-        if (low < 0) n += 4294967296;
-        return setValue(name, n);
-      },
-      5: () => {
-        var data = readBytes(player, 4);
-        return setValue(name, data.readFloatBE());
-      },
-      6: () => {
-        var data = readBytes(player, 8);
-        return setValue(name, data.readDoubleBE());
-      },
-      8: () => {
-        var length = readBytes(player, 2).readUInt16BE();
-        var string = readBytes(player, length).toString('utf-8');
-        return setValue(name, `"${string}"`);
-      },
-      9: () => {
-        var listType = readBytes(player, 1).readInt8();
-        var length = readBytes(player, 4).readInt32BE();
-        nbtBackup.push(nbtStructure);
-        nbtStructure = {};
-        nbtBackup.push(inArray);
-        nbtBackup.push(currentArrayType);
-        nbtBackup.push(currentArrayLength);
-        nbtBackup.push(currentCompound);
-        nbtBackup.push(arrayIndex);
-        nbtBackup.push(currentArrayName);
-        inArray = true;
-        arrayIndex = listType == 10 ? -1 : 0;
-        currentArrayType = listType;
-        currentArrayLength = length;
-        currentArrayName = name;
-        currentCompound = [];
-      },
-      10: () => {
-        if (name !== "") currentCompound.push(name);
-      }
-    }
-    types[typeID]();
-  }
-  readNext();
-
-  return nbtStructure;
-}
-
-/**
- * Reads NBT data and puts it into an object
- * 
- * @param {Buffer} data 
- * @return {Object} nbtStructure
- */
-export function readNBT(data) {
-  var nbtStructure = {};
-  var readIndex = 0;
-  /**
-   * @type {Array<string>}
-   */
-  var currentCompound = [];
-  var nbtBackup = [];
-  var inArray = false;
-  var arrayIndex = 0;
-  var currentArrayType = 0;
-  var currentArrayLength = 0;
-  var currentArrayName = "";
-
-  /**
-   * @param {number} bytes 
-   * @return {Buffer} data;
-   */
-  function readBytes(bytes) {
-    var readData = data.slice(readIndex, readIndex + bytes);
-    readIndex += bytes;
-    return readData;
-  }
-
-  /**
-   * @param {string} name 
-   * @param {any} value 
-   */
-  function setValue(name, value) {
-    //console.log(currentCompound.join(".") + "." + name);
-    var fullPath = "";
-    currentCompound.forEach(child => {
-      fullPath += `["${child}"]`;
-      if (eval("nbtStructure" + fullPath) == undefined) eval("nbtStructure" + fullPath + " = {};");
-    });
-    fullPath += `["${name}"]`;
-    if (typeof value == "object") {
-      value = JSON.stringify(value);
-    }
-    var command = "nbtStructure" + fullPath + " = " + value + ";";
-    eval(command);
-  }
-
-  function endArray() {
-    var name = currentArrayName;
-    currentArrayName = nbtBackup.pop();
-    var length = currentArrayLength;
-    arrayIndex = nbtBackup.pop();
-    currentCompound = nbtBackup.pop();
-    currentArrayLength = nbtBackup.pop();
-    currentArrayType = nbtBackup.pop();
-    inArray = nbtBackup.pop();
-    var generatedStructure = nbtStructure;
-    nbtStructure = nbtBackup.pop();
-    var array = [];
-    for (var i = 0; i < length; i++) {
-      array.push(generatedStructure[i]);
-    }
-    setValue(name, array);
-  }
-
-  function readNext() {
-    if (inArray && currentArrayLength == arrayIndex) endArray();
-    var typeID;
-    var nameLength;
-    var name;
-    if (inArray) {
-      typeID = currentArrayType;
-      currentCompound.unshift(arrayIndex);
-      name = currentCompound.pop();
-      if (currentCompound.length == 0) arrayIndex++;
-      if (typeID == 10 && currentCompound.length > 0) {
-        typeID = readBytes(1).readInt8();
-        if (typeID == 0) {
-          currentCompound.pop();
-          return;
-        };
-        nameLength = readBytes(2).readUInt16BE(0);
-        name = readBytes(nameLength).toString('utf-8');
-      }
-    } else {
-      typeID = readBytes(1).readInt8();
-      if (typeID == 0) {
-        currentCompound.pop();
-        return;
-      };
-      nameLength = readBytes(2).readUInt16BE(0);
-      name = readBytes(nameLength).toString('utf-8');
-    }
-
-    var types = {
-      0: () => {
-        currentCompound.pop();
-      },
-      1: () => {
-        var data = readBytes(1);
-        return setValue(name, data.readInt8(0));
-      },
-      2: () => {
-        var data = readBytes(2);
-        return setValue(name, data.readInt16BE(0));
-      },
-      3: () => {
-        var data = readBytes(4);
-        return setValue(name, data.readInt32BE(0));
-      },
-      4: () => {
-        var data = readBytes(8);
-        var low = data.readInt32BE(4);
-        var n = data.readInt32BE() * 4294967296.0 + low;
-        if (low < 0) n += 4294967296;
-        return setValue(name, n);
-      },
-      5: () => {
-        var data = readBytes(4);
-        return setValue(name, data.readFloatBE());
-      },
-      6: () => {
-        var data = readBytes(8);
-        return setValue(name, data.readDoubleBE());
-      },
-      8: () => {
-        var length = readBytes(2).readUInt16BE();
-        var string = readBytes(length).toString('utf-8');
-        return setValue(name, `"${string}"`);
-      },
-      9: () => {
-        var listType = readBytes(1).readInt8();
-        var length = readBytes(4).readInt32BE();
-        nbtBackup.push(nbtStructure);
-        nbtStructure = {};
-        nbtBackup.push(inArray);
-        nbtBackup.push(currentArrayType);
-        nbtBackup.push(currentArrayLength);
-        nbtBackup.push(currentCompound);
-        nbtBackup.push(arrayIndex);
-        nbtBackup.push(currentArrayName);
-        inArray = true;
-        arrayIndex = listType == 10 ? -1 : 0;
-        currentArrayType = listType;
-        currentArrayLength = length;
-        currentArrayName = name;
-        currentCompound = [];
-      },
-      10: () => {
-        if (name !== "") currentCompound.push(name);
-      }
-    }
-    types[typeID]();
-  }
-  while (readIndex < data.length) {
-    readNext();
-  }
-
-  return nbtStructure;
 }
 
 export function blockIdToStateId(version, id, properties) {

@@ -1,9 +1,9 @@
-import Player from "../../../../../Player";
+import Client from "../../../../../Client";
 
 const utils = require("../../../../../utils");
 
 /**
- * @param {Player} player
+ * @param {Client} player
  * @param {number} dataLength
  */
 module.exports = (player, dataLength, entityId, actionId, jumpBoost) => {
