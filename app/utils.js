@@ -9,6 +9,7 @@ var zlib = require('zlib');
 
 export const types = {
   read: {
+    byte: readByte,
     boolean: readBoolean,
     double: readDouble,
     float: readFloat,
@@ -120,6 +121,10 @@ export function readBytes(player, bytes) {
   var data = player.internalBuffer.slice(player.internalIndex, bytes + player.internalIndex);
   player.internalIndex += bytes;
   return data;
+}
+
+export function readByte(player) {
+  return readBytes(player, 1);
 }
 
 export function readType(type, player, ...args) {
