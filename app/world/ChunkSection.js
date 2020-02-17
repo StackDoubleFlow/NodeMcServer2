@@ -12,18 +12,13 @@ export default class ChunkSection {
   }
 
   setBlockState(x, y, z, state) {
-    const blockIndex = (y * 256) + (z * 16) + x;
+    const blockIndex = (y * 16 + z) * 16 + x;
     this.blockStates[blockIndex] = state;
   }
 
   getBlockState(x, y, z) {
-    const blockIndex = (y * 256) + (z * 16) + x;
+    const blockIndex = (y * 16 + z) * 16 + x;
     return this.blockStates[blockIndex];
-  }
-
-  setBlockState(x, y, z, state) {
-    const blockIndex = (y * 256) + (z * 16) + x;
-    this.blockStates[blockIndex] = state;
   }
 
   calcualtePalette() {

@@ -1,4 +1,5 @@
 import Chunk from "./Chunk";
+import ChunkSection from "./ChunkSection";
 import * as utils from "../utils";
 import { readNBT } from "../nbt";
 import SuperflatGenerator from "./generators/SuperflatGenerator";
@@ -117,17 +118,34 @@ export default class World {
   }
 
   loadWorld() {
-    // const levelFile = fs.readFileSync(this.path + "/level.dat");
-    // const levelRaw = zlib.gunzipSync(levelFile);
-    // const levelNbt = readNBT(levelRaw);
+    // const levelFile = fs.readFileSync(this.worldPath + "/level.dat");
+    // const levelRaw = zlib.inflateSync(levelFile);
+    // this.levelNbt = readNBT(levelFile);z
+
     const regionFolderPath = this.worldPath + "region/";
     const regionFileNames = fs.readdirSync(regionFolderPath);
+
+    const totalChunks = regionFileNames.length * 32 * 32;
+    let lastP = 0;
+
     for (const fileName of regionFileNames) {
       const rawFile = fs.readFileSync(regionFolderPath + fileName);
       // const regionX = fileName.split(".")[1];
       // const regionZ = fileName.split(".")[2];
       for (let chunkZ = 0; chunkZ < 32; chunkZ++) {
         for (let chunkX = 0; chunkX < 32; chunkX++) {
+
+          // Loading %
+          // -------------------
+          const chunkIndex = (chunkZ * 32) + (regionFileNames.indexOf(fileName) * 32 * 32) + chunkX;
+          const complete = Math.floor(chunkIndex / totalChunks * 100);
+
+          if (complete != lastP) {
+            console.log(complete + "% complete");
+            lastP = complete;
+          }
+          // -------------------
+          
           const locationOffset = 4 * ((chunkX & 31) + (chunkZ & 31) * 32);
           const offset = rawFile.readUIntBE(locationOffset, 3) * 4096;
           if (offset == 0) continue;
@@ -149,33 +167,69 @@ export default class World {
     }
   }
 
+  smallestEncompassingPowerOfTwo(value) {
+    let i = value - 1;
+    i = i | i >> 1;
+    i = i | i >> 2;
+    i = i | i >> 4;
+    i = i | i >> 8;
+    i = i | i >> 16;
+    return i + 1;
+ }
+
+  test(value) {
+    value = (value & (value - 1)) === 0 ? value : this.smallestEncompassingPowerOfTwo(value);
+    return [0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9][(value * 125613361 >> 27) & 31]
+  }
+
   loadChunk(chunkData) {
     const chunkNbt = readNBT(chunkData)[""];
-
+    fs.writeFileSync("chunk.json", require("json-bigint").stringify(chunkNbt, null, 2));
     const x = chunkNbt.Level.xPos;
     const z = chunkNbt.Level.zPos;
+    console.log("Loading chunk " + x + " " + z);
+    const chunk = new Chunk(x, z, this, new Array(16));
 
     if (!this.chunks[x]) this.chunks[x] = [];
 
-    const sections = new Array(16);
+    chunkNbt.Level.Sections.shift();
+    let timer1 = 0n;
+    let timer2 = 0n;
 
-    console.log(chunkNbt.Level.Sections[0].Palette[0]);
+    for(const section of chunkNbt.Level.Sections) {  
+      //const bitsPerBlock = Math.max(4, Math.floor(Math.log(section.Palette.length) / Math.log(2)) + 1);
+      let startTime = process.hrtime.bigint();
+      // ******* Timer 1 *******
+      const bitsPerBlock = Math.max(4, this.test(section.Palette.length));
+      console.log(bitsPerBlock);
+      const paletteIndicies = utils.nBitLongToNums(section.BlockStates, bitsPerBlock);
+      const states = new Array(4096);
+      // ***********************
+      timer1 += process.hrtime.bigint() - startTime;
+      startTime = process.hrtime.bigint();
+      
+      // ******* Timer 2 *******
+      for(let i = 0; i < paletteIndicies.length; i++) {
+        const paletteIndex = paletteIndicies[i];
 
-    for(const section of chunkNbt.Level.Sections) {
-      const states = [];
-      const bitsPerBlock = Math.max(4, Math.floor(Math.log(section.Palette.length) / Math.log(2)) + 1);
+        if(paletteIndex != null && paletteIndex < section.Palette.length) {
+          const palette = section.Palette[paletteIndex];
 
-      const paletteIndicies = utils.nBitLongToNums(bitsPerBlock, section.BlockStates);
-
-      for(let paletteIndex of paletteIndicies) {
-        // utils.blockIdToStateId("1.15.2", palette.Name, palette.Properties)
+          if(!palette) continue;
+          
+          states[i] = utils.blockIdToStateId("1.15.2", palette.Name, palette.Properties);
+        }
       }
 
-      sections[section.Y] = states;
+      chunk.sections[section.Y] = new ChunkSection(chunk, section.y, states);
+      // ***********************
+
+      timer2 += process.hrtime.bigint() - startTime;
     }
+    console.log("Timer 1: " + Number(timer1) / 1000000.0 + "ms");
+    console.log("Timer 2: " + Number(timer2) / 1000000.0 + "ms");
     
-    // this.chunks[x][z] = new Chunk(x, z, this, sections);
-    
+    this.chunks[x][z] = chunk;
   }
 
 }

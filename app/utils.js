@@ -858,9 +858,12 @@ export function itemIdtoItemProtocolId(version, itemId) {
 
 }
 
+const blocksCache = {};
+
 export function blockIdToStateId(version, id, properties) {
+  const blocks = blocksCache[version] || require(`./generated_data/${version}/reports/blocks.json`);
+  blocksCache[version] = blocks;
   id = id.toLowerCase();
-  const blocks = require(`./generated_data/${version}/reports/blocks.json`);
 
   const block = blocks[id];
 
@@ -889,23 +892,28 @@ export function blockIdToStateId(version, id, properties) {
           throw new Error(`Missing property ${prop} on block ${id}`);
       }
 
+    let rtnState = null;
 
-    states:
-    for (const state of block.states) {
+    block.states.forEach(state => {
       for (const prop of Object.keys(block.properties)) {
-        if (block.properties[prop] !== properties[prop]) {
-            break states;
+        // if (properties[prop] === "true" || properties[prop] === "false") {
+        //   properties[prop] = properties[prop] === "true";
+        // }
+        if (state.properties[prop] != properties[prop]) {
+            return;
         }
       }
-      return state;
-    }
+      rtnState = state
+    });
 
-    throw new Error(`Unknown state for given properties of ${id}`);
+    if(!rtnState) throw new Error(`Unknown state for given properties of ${id}`);
+    return rtnState;
   }
 }
 
 export function stateIdToBlockId(version, stateId) {
-    const blocks = require(`./generated_data/${version}/reports/blocks.json`);
+  const blocks = blocksCache[version] || require(`./generated_data/${version}/reports/blocks.json`);
+  blocksCache[version] = blocks;
 
     for(let id of Object.keys(blocks)) {
         const block = blocks[id];
@@ -923,7 +931,35 @@ export function stateIdToBlockId(version, stateId) {
 }
 
 export function nBitLongToNums(longs, bitsPerNum) {
-  for (let i = 0;; i++) {
-    
+  const nums = [];
+  let bitMask = 0n;
+  for (let i = 0; i < bitsPerNum; i++) bitMask |= BigInt(1 << i);
+  const numNums = Math.floor(longs.length * 64 / bitsPerNum);
+  for (let i = 0; i < numNums; i++) {
+    const longIndex = (i * bitsPerNum) >>> 6;
+    const bitIndex = (i * bitsPerNum) & 0x3F;
+    let long = longs[longIndex];
+    if (bitIndex + bitsPerNum > 64) long |= (longs[longIndex + 1] << 64n);
+    let shiftedNum = long >> BigInt(bitIndex);
+    nums.push(Number(shiftedNum & bitMask));
   }
+
+  return nums;
 }
+
+// export function nBitLongToNums(longs, bitsPerNum) {
+//   const nums = [];
+//   let bitMask = 0n;
+//   for (let i = 0n; i < bitsPerNum; i++) bitMask |= (1n << i);
+//   const numNums = Math.floor(longs.length * 64 / bitsPerNum);
+  // for (let i = 0; i < numNums; i++) {
+  //   const longIndex = Math.floor((i * bitsPerNum) / 64);
+  //   const bitIndex = BigInt((i * bitsPerNum) % 64);
+  //   const long = longs[longIndex];
+  //   if (longs[longIndex + 1]) long |= longs[longIndex + 1];
+  //   let shiftedNum = long & (bitMask << bitIndex);
+  //   nums.push(shiftedNum >> bitIndex);
+  // }
+
+//   return nums;
+// }
