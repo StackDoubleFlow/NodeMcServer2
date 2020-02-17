@@ -2,17 +2,22 @@ import ChunkSection from "./ChunkSection";
 import { writeInt, writeByte, writeVarInt, createBufferObject, appendData, writeUShort, writeByteArray, blockIdToStateId } from "../utils";
 
 export default class Chunk {
-  constructor(x, z, world) {
+  constructor(x, z, world, sections) {
     this.x = x;
     this.z = z;
     this.world = world;
-    this.sections = new Array(16);
 
-    const data = this.world.generator.getChunk(this.x, this.y);
+    if (sections) {
+      this.sections = sections;
+    } else {
+      this.sections = new Array(16);
 
-    for(let s = 0; s < 16; s++) {
-      if (data[s]) {
-        this.sections[s] = new ChunkSection(this, s, data[s]);
+      const data = this.world.generator.getChunk(this.x, this.y);
+
+      for(let s = 0; s < 16; s++) {
+        if (data[s]) {
+          this.sections[s] = new ChunkSection(this, s, data[s]);
+        }
       }
     }
   }

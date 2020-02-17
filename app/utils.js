@@ -847,7 +847,15 @@ export function itemProtocolIdToItemId(version, protocolId) {
     if (id == protocolId) return name;
   }
 
-  return null
+  return null;
+}
+
+export function itemIdtoItemProtocolId(version, itemId) {
+  const items = require(`./generated_data/${version}/reports/registries.json`)["minecraft:item"].entries;
+  const item = items[itemId];
+  if (!item) return null;
+  return item.protocol_id;
+
 }
 
 export function blockIdToStateId(version, id, properties) {
@@ -912,4 +920,10 @@ export function stateIdToBlockId(version, stateId) {
     }
 
     return null;
+}
+
+export function nBitLongToNums(longs, bitsPerNum) {
+  for (let i = 0;; i++) {
+    
+  }
 }

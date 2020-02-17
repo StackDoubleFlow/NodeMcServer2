@@ -150,10 +150,32 @@ export default class World {
   }
 
   loadChunk(chunkData) {
-    //console.log(chunkData.toString("hex"));
-    fs.writeFileSync("test.nbt", chunkData);
     const chunkNbt = readNBT(chunkData)[""];
-    //console.log(chunkNbt.Level.xPos, chunkNbt.Level.zPos);
+
+    const x = chunkNbt.Level.xPos;
+    const z = chunkNbt.Level.zPos;
+
+    if (!this.chunks[x]) this.chunks[x] = [];
+
+    const sections = new Array(16);
+
+    console.log(chunkNbt.Level.Sections[0].Palette[0]);
+
+    for(const section of chunkNbt.Level.Sections) {
+      const states = [];
+      const bitsPerBlock = Math.max(4, Math.floor(Math.log(section.Palette.length) / Math.log(2)) + 1);
+
+      const paletteIndicies = utils.nBitLongToNums(bitsPerBlock, section.BlockStates);
+
+      for(let paletteIndex of paletteIndicies) {
+        // utils.blockIdToStateId("1.15.2", palette.Name, palette.Properties)
+      }
+
+      sections[section.Y] = states;
+    }
+    
+    // this.chunks[x][z] = new Chunk(x, z, this, sections);
+    
   }
 
 }

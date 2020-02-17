@@ -5,6 +5,7 @@ import { inflate } from 'zlib';
 import MinecraftServer from "./MinecraftServer";
 import PacketManager from "./packets/PacketManager"
 import Location from "./world/Location";
+import Item from "./world/Item";
 
 var net = require('net');
 var utils = require('./utils');
@@ -120,10 +121,18 @@ export default class Client {
         this.gamemode = "creative";
         this.inventory = new Array(46);
         this.enderChest = new Array(27);
+        this.heldItemSlot = 0;
 
         this.tcpSocket.on('readable', this.onStreamReadable.bind(this));
         this.tcpSocket.on('end', this.onStreamEnd.bind(this));
         this.tcpSocket.on('error', this.onStreamEnd.bind(this));
+    }
+
+    /**
+     * @type {Item}
+     */
+    get heldItem() {
+        return this.inventory[this.heldItemSlot + 36];
     }
 
     teleport(loc) {

@@ -253,6 +253,15 @@ module.exports = {
       ],
       auto: true
     },
+    0x23: {
+      name: "HeldItemChange",
+      parameters: [
+        {
+          name: "slot",
+          type: "short"
+        }
+      ]
+    },
     0x26: {
       name: "CreativeInventoryAction",
       parameters: [
@@ -341,7 +350,6 @@ module.exports = {
     0x20: placeholder("AdvancementTab"),
     0x21: placeholder("SelectTrade"),
     0x22: placeholder("SetBeaconEffect"),
-    0x23: placeholder("HeldItemChange"),
     0x24: placeholder("UpdateCommandBlock"),
     0x25: placeholder("UpdateCommandBlockMinecart"),
     0x27: placeholder("UpdateJigsawBlock"),

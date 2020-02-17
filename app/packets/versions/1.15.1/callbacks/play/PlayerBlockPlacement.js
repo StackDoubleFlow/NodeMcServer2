@@ -14,7 +14,9 @@ module.exports = (player, dataLength) => {
   const cursorY = utils.readFloat(player);
   const cursorZ = utils.readFloat(player);
   const insideBlock = utils.readBoolean(player);
-  const blockId = utils.blockIdToStateId("1.15.2", "minecraft:wet_sponge");
+  const heldItem = player.heldItem;
+  if (!heldItem) return;
+  const blockId = utils.blockIdToStateId("1.15.2", heldItem.id);
   if (face == 0) { // -Y
     location.y--;
   } else if (face == 1) { // +Y
