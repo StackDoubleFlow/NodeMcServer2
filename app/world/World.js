@@ -187,7 +187,7 @@ export default class World {
     fs.writeFileSync("chunk.json", require("json-bigint").stringify(chunkNbt, null, 2));
     const x = chunkNbt.Level.xPos;
     const z = chunkNbt.Level.zPos;
-    console.log("Loading chunk " + x + " " + z);
+    //console.log("Loading chunk " + x + " " + z);
     const chunk = new Chunk(x, z, this, new Array(16));
 
     if (!this.chunks[x]) this.chunks[x] = [];
@@ -201,7 +201,6 @@ export default class World {
       let startTime = process.hrtime.bigint();
       // ******* Timer 1 *******
       const bitsPerBlock = Math.max(4, this.test(section.Palette.length));
-      console.log(bitsPerBlock);
       const paletteIndicies = utils.nBitLongToNums(section.BlockStates, bitsPerBlock);
       const states = new Array(4096);
       // ***********************
@@ -226,8 +225,8 @@ export default class World {
 
       timer2 += process.hrtime.bigint() - startTime;
     }
-    console.log("Timer 1: " + Number(timer1) / 1000000.0 + "ms");
-    console.log("Timer 2: " + Number(timer2) / 1000000.0 + "ms");
+    // console.log("Timer 1: " + Number(timer1) / 1000000.0 + "ms");
+    // console.log("Timer 2: " + Number(timer2) / 1000000.0 + "ms");
     
     this.chunks[x][z] = chunk;
   }
