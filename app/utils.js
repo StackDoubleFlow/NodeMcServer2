@@ -931,17 +931,17 @@ export function stateIdToBlockId(version, stateId) {
 }
 
 export function nBitLongToNums(longs, bitsPerNum) {
-  const nums = [];
   let bitMask = 0n;
   for (let i = 0; i < bitsPerNum; i++) bitMask |= BigInt(1 << i);
-  const numNums = Math.floor(longs.length * 64 / bitsPerNum);
+  const numNums = ~~(longs.length * 64 / bitsPerNum);
+  const nums = new Array(numNums);
   for (let i = 0; i < numNums; i++) {
     const longIndex = (i * bitsPerNum) >>> 6;
     const bitIndex = (i * bitsPerNum) & 0x3F;
     let long = longs[longIndex];
     if (bitIndex + bitsPerNum > 64) long |= (longs[longIndex + 1] << 64n);
     let shiftedNum = long >> BigInt(bitIndex);
-    nums.push(Number(shiftedNum & bitMask));
+    nums[i] = Number(shiftedNum & bitMask);
   }
 
   return nums;
