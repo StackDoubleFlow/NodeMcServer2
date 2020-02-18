@@ -291,7 +291,7 @@ export function readDouble(player) {
  * 
  * @param {Client} player
  * Player to read from
- * @return {number} value
+ * @return {boolean} value
  * Value of the Boolean that has been read
  */
 export function readBoolean(player) {

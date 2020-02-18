@@ -11,13 +11,14 @@ const utils = require("../../../../../utils");
 module.exports = (player, dataLength) => {
   const slot = utils.readUShort(player);
   const present = utils.readBoolean(player);
+  console.log(slot, present);
   if (!present) {
     player.inventory[slot] = undefined;
     return;
   }
   
   const itemID = utils.readVarInt(player);
-  const itemCount = utils.readVarInt(player);
+  const itemCount = utils.readByte(player);
   const nbt = readNBTFromPlayer(player);
   player.inventory[slot] = Item.fromProtocolId("1.15.2", itemID, itemCount); 
 };
