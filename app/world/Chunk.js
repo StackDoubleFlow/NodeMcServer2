@@ -1,5 +1,6 @@
 import ChunkSection from "./ChunkSection";
 import { writeInt, writeByte, writeVarInt, createBufferObject, appendData, writeUShort, writeByteArray, blockIdToStateId } from "../utils";
+import { writeNBTToPacket } from "../nbt";
 
 export default class Chunk {
   constructor(x, z, world, sections) {
@@ -91,13 +92,7 @@ export default class Chunk {
     return 0;
   }
 
-  writeHeightmap(bufferObject) { // TODO: Make better
-    function writeStr(name) {
-      var out = Buffer.from(name, 'utf-8');
-      writeUShort(bufferObject, name.length);
-      appendData(bufferObject, out);
-    }
-
+  writeHeightmap(bufferObject) { // TODO: Optimize
     const longs = [];
     const longMask = 0xFFFFFFFFFFFFFFFFn;
     const bitsPerNum = 9;
@@ -114,21 +109,17 @@ export default class Chunk {
         longs[longIndex + 1] |= overflow >> 64n;
       }
     }
-    let buf = Buffer.alloc(longs.length * 8);
-    for (let i = 0; i < longs.length; i++) {
-      buf.writeBigUInt64BE(longs[i], i);
-    }
 
-    // Compound
-    writeByte(bufferObject, 0x0A); // Type ID (Compound)
-    writeStr("Hightmap"); // Name
-
-    // Long array
-    writeByte(bufferObject, 0x0C); // Type ID (TAG_Long_Array)
-    writeStr("MOTION_BLOCKING"); // Name
-    writeInt(bufferObject, longs.length); // Length
-    writeByteArray(bufferObject, buf); // Write the long boi
-
-    writeByte(bufferObject, 0x00); // End Compound
+    writeNBTToPacket(bufferObject, {
+      "": {
+        type: "compound",
+        val: {
+            MOTION_BLOCKING: {
+            type: "longArray",
+            val: longs
+          }
+        }
+      }
+    });
   }
 }

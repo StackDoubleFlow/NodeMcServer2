@@ -137,10 +137,158 @@ class NBTReader {
 class NBTWriter {
   constructor(data) {
     this.data = data;
-    this.buffer = Buffer.alloc();
+    this.buffer = Buffer.alloc(0);
+    this.types = {
+      byte: {
+        id: 1,
+        writer: this.writeByte.bind(this)
+      },
+      short: {
+        id: 2,
+        writer: this.writeShort.bind(this)
+      },
+      int: {
+        id: 3,
+        writer: this.writeInt.bind(this)
+      },
+      long: {
+        id: 4,
+        writer: this.writeLong.bind(this)
+      },
+      float: {
+        id: 5,
+        writer: this.writeFloat.bind(this)
+      },
+      double: {
+        id: 6,
+        writer: this.writeDouble.bind(this)
+      },
+      byteArray: {
+        id: 7,
+        writer: this.writeByteArray.bind(this)
+      },
+      string: {
+        id: 8,
+        writer: this.writeString.bind(this)
+      },
+      list: {
+        id: 9,
+        writer: this.writeList.bind(this)
+      },
+      compound: {
+        id: 10,
+        writer: this.writeCompound.bind(this)
+      },
+      intArray: {
+        id: 11,
+        writer: this.writeIntArray.bind(this)
+      },
+      longArray: {
+        id: 12,
+        writer: this.writeLongArray.bind(this)
+      },
+    }
   }
 
+  write() {
+    this.writeCompound(this.data);
+    return this.buffer;
+  }
+
+  writeBytes(data) {
+    this.buffer = Buffer.concat([this.buffer, Buffer.from(data)]);;
+  }
+
+  writeByte(byte) {
+    this.writeBytes(Buffer.from([byte]));
+  }
+
+  writeEnd() {
+    this.writeByte(0);
+  }
+
+  writeByte(val) {
+    this.writeBytes([val]);
+  }
+
+  writeShort(val) {
+    let temp = Buffer.alloc(2);
+    temp.writeInt16BE(val);
+    this.writeBytes(temp);
+  }
+
+  writeInt(val) {
+    let temp = Buffer.alloc(4);
+    temp.writeInt32BE(val);
+    this.writeBytes(temp);
+  }
+
+  writeLong(val) {
+    let temp = Buffer.alloc(8);
+    temp.writeBigUInt64BE(val);
+    this.writeBytes(temp);
+  }
+
+  writeFloat(val) {
+    let temp = Buffer.alloc(4);
+    temp.writeFloatBE(val);
+    this.writeBytes(temp);
+  }
+
+  writeDouble(val) {
+    let temp = Buffer.alloc(8);
+    temp.writeDoubleBE(val);
+    this.writeBytes(temp);
+  }
+
+  writeByteArray(val) {
+    this.writeInt(val.length);
+    this.writeBytes(Buffer.from(val));
+  }
+
+  writeString(val) {
+    this.writeShort(val.length);
+    this.writeBytes(Buffer.from(val, "utf8"));
+  }
+
+  writeList(list) {
+    const type = list.type;
+    const typeID = this.types[type].id;
+    this.writeByte(typeID);
+    this.writeInt(list.val.length);
+    const writer = this.types[type].writer;
+    for (const item in list.val) {
+      writer(item);
+    }
+  }
+
+  writeCompound(compound) {
+    for (const name of Object.keys(compound)) {
+      const type = compound[name].type;
+      const val = compound[name].val;
+      const typeID = this.types[type].id;
+      const writer = this.types[type].writer;
+      this.writeByte(typeID);
+      this.writeString(name);
+      writer(val);
+      if (type == "compound") 
+        this.writeEnd();
+    }
+  }
   
+  writeIntArray(array) {
+    this.writeInt(array.length);
+    for (const item of array) {
+      this.writeInt(item);
+    }
+  }
+
+  writeLongArray(array) {
+    this.writeInt(array.length);
+    for (const item of array) {
+      this.writeLong(item);
+    }
+  }
 }
 
 export function readNBT(data) {
@@ -154,4 +302,16 @@ export function readNBTFromPlayer(player) {
   const nbt = reader.read();
   player.internalIndex += reader.i;
   return nbt;
+}
+
+export function writeNBT(data) {
+  const writer = new NBTWriter(data);
+  return writer.write();
+}
+
+export function writeNBTToPacket(bufferObject, data) {
+  let buf = writeNBT(data);
+  //console.log(buf.toString('hex'));
+  //console.log(buf.toString('utf8'));
+  utils.appendData(bufferObject, buf);
 }

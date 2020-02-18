@@ -34,7 +34,7 @@ export default class World {
     this.difficultyLocked = false;
 
     this.dimention = "overworld";
-    this.worldPath = "./server_data/worlds/test_world/";
+    this.worldPath = "./server_data/worlds/Hek/";
 
     this.gamerules = {
       announceAdvancements: true,
@@ -70,9 +70,6 @@ export default class World {
       spawnRadius: 10
     };
     
-    const bigtest = fs.readFileSync("./bigtest.nbt");
-    const uncomressedBigtest = zlib.gunzipSync(bigtest);
-    //console.log(readNBT(uncomressedBigtest));
     this.loadWorld();
   }
 
@@ -184,7 +181,7 @@ export default class World {
 
   loadChunk(chunkData) {
     const chunkNbt = readNBT(chunkData)[""];
-    fs.writeFileSync("chunk.json", require("json-bigint").stringify(chunkNbt, null, 2));
+    //fs.writeFileSync("chunk.json", require("json-bigint").stringify(chunkNbt, null, 2));
     const x = chunkNbt.Level.xPos;
     const z = chunkNbt.Level.zPos;
     //console.log("Loading chunk " + x + " " + z);

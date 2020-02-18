@@ -190,6 +190,7 @@ export default class Client {
         utils.writeByte(changeGameState, 3);
         utils.writeFloat(changeGameState, gamemode);
         utils.writePacket(0x1F, changeGameState, this, "play", "ChangeGameState");
+        this.sendPlayerAblilites();
     }
 
     getStatusMetaDataBitMask() {
@@ -316,6 +317,10 @@ export default class Client {
         utils.writePacket(0x1B, response, this, "play", "Disconnect");
         
         this.tcpSocket.end();
+    }
+
+    sendPlayerAblilites() {
+        
     }
 
     sendPacket(name, ...args) {
