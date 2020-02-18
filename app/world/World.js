@@ -188,12 +188,12 @@ export default class World {
     const chunk = new Chunk(x, z, this, new Array(16));
 
     if (!this.chunks[x]) this.chunks[x] = [];
-
-    chunkNbt.Level.Sections.shift();
+    
     let timer1 = 0n;
     let timer2 = 0n;
 
     for(const section of chunkNbt.Level.Sections) {  
+      if (!section.Palette || !section.BlockStates) continue;
       //const bitsPerBlock = Math.max(4, Math.floor(Math.log(section.Palette.length) / Math.log(2)) + 1);
       let startTime = process.hrtime.bigint();
       // ******* Timer 1 *******
