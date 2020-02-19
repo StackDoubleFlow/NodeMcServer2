@@ -15,19 +15,19 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
   if (response.statusCode !== 200) {
     console.log("Mojang Server responded with " + response.statusCode);
   }
-  var responseData = JSON.parse(data);
+  const responseData = JSON.parse(data);
   /** @type {string} */
-  var unformattedUUID = responseData.id;
+  const unformattedUUID = responseData.id;
   player.unformattedUUID = unformattedUUID;
-  var UUID = `${unformattedUUID.substr(0, 8)}-${unformattedUUID.substr(8, 4)}-${unformattedUUID.substr(12, 4)}-${unformattedUUID.substr(16, 4)}-${unformattedUUID.substr(20, 12)}`;
+  const UUID = `${unformattedUUID.substr(0, 8)}-${unformattedUUID.substr(8, 4)}-${unformattedUUID.substr(12, 4)}-${unformattedUUID.substr(16, 4)}-${unformattedUUID.substr(20, 12)}`;
   player.UUID = UUID;
-  var loginSuccess = utils.createBufferObject();
+  const loginSuccess = utils.createBufferObject();
   utils.writeString(loginSuccess, player.UUID, 36);
   utils.writeString(loginSuccess, player.username, 16);
   utils.writePacket(0x02, loginSuccess, player, "logn", "LoginSuccess");
   player.entityID = crypto.randomBytes(2).readUIntBE(0, 2);
 
-  var joinGame = utils.createBufferObject();
+  const joinGame = utils.createBufferObject();
   utils.writeInt(joinGame, player.entityID); //Entity ID
   utils.writeByte(joinGame, 1); // Gamemode
   utils.writeInt(joinGame, 0); // Dimention
@@ -48,7 +48,7 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
   player.state = "play";
   player.server.onPlayerConnected(player);
 
-  var playerPositionAndLook = utils.createBufferObject();
+  const playerPositionAndLook = utils.createBufferObject();
   // Quick 0 position test
   utils.writeDouble(playerPositionAndLook, player.location.x); // X
   utils.writeDouble(playerPositionAndLook, player.location.y); // Y
@@ -60,14 +60,14 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
   utils.writePacket(0x36, playerPositionAndLook, player, "play", "PlayerPositionAndLook");
 
   // Chunk data
-  for (var x = -7; x < 7; x++) {
-    for (var z = -7; z < 7; z++) {
+  for (let x = -7; x < 7; x++) {
+    for (let z = -7; z < 7; z++) {
       utils.writePacket(0x22, player.server.world.getChunkPacket(x, z, true), player, "play", "ChunkData");
     }
   }
 
   // Tab Player List
-  var playerListHeaderAndFooter = utils.createBufferObject();
+  const playerListHeaderAndFooter = utils.createBufferObject();
   utils.writeJson(playerListHeaderAndFooter, { text: "MCNodeServer" }, 32767);
   utils.writeJson(playerListHeaderAndFooter, { "text": "Made by StackDoubleFlow & Allen" }, 32767);
   utils.writePacket(0x54, playerListHeaderAndFooter, player, "play", "PlayerListHeaderAndFooter");
@@ -89,7 +89,7 @@ function HandleMojangLoginResponse(player, dataLength, response, data) {
  * @param {string} data
  */
 function HandleMojangProfileResponse(player, dataLength, response, data) {
-  var useCache = false;
+  let useCache = false;
   if (response.statusCode !== 200) {
     //console.log("Unable to retrieve player profile!");
     useCache = true;
@@ -111,7 +111,7 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
     player.server.playerPropertyCache.set(player.username, player.properties);
   }
 
-  var playerInfo = utils.createBufferObject();
+  const playerInfo = utils.createBufferObject();
   utils.writeVarInt(playerInfo, 0); // Action (Add Player)
   utils.writeVarInt(playerInfo, player.server.onlinePlayers.length); // Number of players
   player.server.onlinePlayers.forEach(plr => {
@@ -131,7 +131,8 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
   });
   utils.writePacket(0x34, playerInfo, player, "play", "PlayerInfo");
 
-  var playerInfo = utils.createBufferObject();
+  /* Why was this here? Maybe to update latency?
+  const playerInfo = utils.createBufferObject();
   utils.writeVarInt(playerInfo, 0); // Action (Add Player)
   utils.writeVarInt(playerInfo, 1); // Number of players
   utils.writeUUID(playerInfo, player) // UUID
@@ -147,6 +148,7 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
   utils.writeVarInt(playerInfo, player.ping); // Ping
   utils.writeByte(playerInfo, 0); // Has display name (False)
   player.server.writePacketToAll(0x34, playerInfo, "play", "PlayerInfo", [player]);
+  */
 
   const declareCommands = utils.createBufferObject();
   utils.writeVarInt(declareCommands, player.server.commandHandler.commands.size + 1); // Num of elements in array
@@ -165,7 +167,7 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
 
   player.server.onlinePlayers.forEach((plr) => {
     if (plr === player) return;
-    var spawnPlayer = utils.createBufferObject();
+    const spawnPlayer = utils.createBufferObject();
     utils.writeVarInt(spawnPlayer, plr.entityID);
     utils.writeUUID(spawnPlayer, plr);
     utils.writeDouble(spawnPlayer, plr.location.x);
@@ -182,7 +184,7 @@ function HandleMojangProfileResponse(player, dataLength, response, data) {
     utils.writePacket(0x05, spawnPlayer, player, "play", "SpawnPlayer");
   });
 
-  var spawnPlayer = utils.createBufferObject();
+  const spawnPlayer = utils.createBufferObject();
   utils.writeVarInt(spawnPlayer, player.entityID);
   utils.writeUUID(spawnPlayer, player);
   utils.writeDouble(spawnPlayer, player.location.x);

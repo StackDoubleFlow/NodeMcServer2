@@ -7,6 +7,7 @@ export default class Chunk {
     this.x = x;
     this.z = z;
     this.world = world;
+    this.tileEntities = [];
 
     if (sections) {
       this.sections = sections;
@@ -64,13 +65,13 @@ export default class Chunk {
   }
 
   getBlockState(x, y, z) {
-    const sectionY = Math.floor(y / 16);
+    const sectionY = y >> 4;
     if (!this.sections[sectionY]) return 0;
     return this.sections[sectionY].getBlockState(x, y - sectionY, z);
   }
 
   setBlockState(x, y, z, state) {
-    const sectionY = Math.floor(y / 16);
+    const sectionY = y >> 4;
     if (!this.sections[sectionY]) 
       this.sections[sectionY] = new ChunkSection(this, sectionY, new Array(4096).fill(0));
     this.sections[sectionY].setBlockState(x, y - sectionY * 16, z, state);

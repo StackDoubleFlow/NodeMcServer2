@@ -3,8 +3,8 @@ import ChunkSection from "./ChunkSection";
 import * as utils from "../utils";
 import { readNBT } from "../nbt";
 import SuperflatGenerator from "./generators/SuperflatGenerator";
-var fs = require('fs');
-var zlib = require('zlib');
+const fs = require('fs');
+const zlib = require('zlib');
 
 /**
  * A minecraft world represented in my own format
@@ -24,8 +24,8 @@ export default class World {
     this.chunks = [];
 
     // Chunk data
-    for (var x = -7; x < 7; x++) {
-      for (var z = -7; z < 7; z++) {
+    for (let x = -7; x < 7; x++) {
+      for (let z = -7; z < 7; z++) {
         this.getChunkPacket(x, z, true);
       }
     }

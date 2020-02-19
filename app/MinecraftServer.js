@@ -6,10 +6,10 @@ import Item from "./world/Item";
 import EventManager from "./api/events/EventManager";
 import * as utils from "./utils";
 
-var net = require('net');
-var fs = require('fs');
-var crypto = require('crypto');
-var path = require('path');
+const net = require('net');
+const fs = require('fs');
+const crypto = require('crypto');
+const path = require('path');
 
 export default class MinecraftServer {
 
@@ -52,7 +52,7 @@ export default class MinecraftServer {
         this.sendMessage("Generating encryption KeyPair");
 
         this.encryptionPassphrase = '';
-        var { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
             modulusLength: 1024, 
             publicExponent: 65537,
             publicKeyEncoding: {
@@ -286,7 +286,7 @@ export default class MinecraftServer {
     }
 
     sendKeepAlive() {
-        var keepAlive = utils.createBufferObject();
+        const keepAlive = utils.createBufferObject();
         this.timeOfLastKeepAlive = new Date().getTime();
         utils.writeLong(keepAlive, this.timeOfLastKeepAlive);
         this.writePacketToAll(0x21, keepAlive, "play", "KeepAlive");
@@ -298,7 +298,7 @@ export default class MinecraftServer {
      * @param {net.Socket} socket 
      */
     onClientConnected(socket) {
-        var player = new Client(socket, this);
+        const player = new Client(socket, this);
     }
 
     /**
@@ -391,13 +391,13 @@ export default class MinecraftServer {
             ]
         }, 1);
 
-        var playerInfo = utils.createBufferObject();
+        const playerInfo = utils.createBufferObject();
         utils.writeVarInt(playerInfo, 4); // Action (Remove Player)
         utils.writeVarInt(playerInfo, 1); // Number of players
         utils.writeUUID(playerInfo, player) // UUID
         this.writePacketToAll(playerInfo, 0x34, "play", "PlayerInfo");
 
-        var removeEntities = utils.createBufferObject();
+        const removeEntities = utils.createBufferObject();
         utils.writeVarInt(removeEntities, 1); // Number of players
         utils.writeVarInt(removeEntities, player.entityID)
         this.writePacketToAll(0x38, removeEntities, "play", "DestroyEntities");

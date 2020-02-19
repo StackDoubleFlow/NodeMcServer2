@@ -69,11 +69,11 @@ export default class PacketManager {
         const fs = require("fs");
         const path = require("path");
         const walk = function(dir) {
-            var results = [];
-            var list = fs.readdirSync(dir);
+            const results = [];
+            const list = fs.readdirSync(dir);
             list.forEach(function(file) {
                 file = dir + '/' + file;
-                var stat = fs.statSync(file);
+                const stat = fs.statSync(file);
                 if (stat && stat.isDirectory()) { 
                     /* Recurse into a subdirectory */
                     results = results.concat(walk(file));
@@ -104,7 +104,7 @@ export default class PacketManager {
      * @param {Client} player
      */
     handlePacket(length, state, packetId, player) {
-        var packet = this.inboundPackets[state][packetId];
+        const packet = this.inboundPackets[state][packetId];
 
         if (packet === undefined) {
             console.log("Unable to handle packet: " + state + " " + packetId.toString(16));
@@ -112,9 +112,9 @@ export default class PacketManager {
             return;
         }
 
-        var callback = this.callbacks[state][packet.name];
+        const callback = this.callbacks[state][packet.name];
 
-        var oldInternalIndex = player.internalIndex;
+        const oldInternalIndex = player.internalIndex;
         length--;
         if(packet.todo) utils.readBytes(player, length);
 
@@ -131,7 +131,7 @@ export default class PacketManager {
 
         callback(player, length, ...args);
 
-        var totalBytesRead = player.internalIndex - oldInternalIndex;
+        const totalBytesRead = player.internalIndex - oldInternalIndex;
         if(totalBytesRead !== length) {
             console.log(length, totalBytesRead);
         }

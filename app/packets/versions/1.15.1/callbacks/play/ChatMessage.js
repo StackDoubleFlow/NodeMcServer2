@@ -7,7 +7,7 @@ const utils = require("../../../../../utils");
  * @param {number} dataLength
  */
 module.exports = (player, dataLength, chatMessage) => {
-  // var chatMessage = utils.readString(player, 256);
+  // const chatMessage = utils.readString(player, 256);
   if(chatMessage.startsWith("/")) {
       console.log("player command", chatMessage.substr(1));
       player.server.commandHandler.runCommand(player, chatMessage.substr(1));

@@ -7,9 +7,9 @@ import PacketManager from "./packets/PacketManager"
 import Location from "./world/Location";
 import Item from "./world/Item";
 
-var net = require('net');
-var utils = require('./utils');
-var crypto = require('crypto');
+const net = require('net');
+const utils = require('./utils');
+const crypto = require('crypto');
 
 export default class Client {
   /**
@@ -250,19 +250,19 @@ export default class Client {
   readNextPacket() {
     try {
       if (this.usePacketCompression) {
-        var packetLength = utils.readVarInt(this);
-        var dataLength = utils.readVarInt(this);
+        const packetLength = utils.readVarInt(this);
+        const dataLength = utils.readVarInt(this);
         if (dataLength !== 0) {
           utils.inflate(dataLength, this);
-          var packetID = utils.readVarInt(this, true);
+          const packetID = utils.readVarInt(this, true);
           this.packetManager.handlePacket(dataLength - packetID.len, this.state, packetID.val, this);
         } else {
-          var packetID = utils.readVarInt(this);
+          const packetID = utils.readVarInt(this);
           this.packetManager.handlePacket(packetLength - 1, this.state, packetID, this);
         }
       } else {
-        var length = utils.readVarInt(this);
-        var packetID = utils.readVarInt(this);
+        const length = utils.readVarInt(this);
+        const packetID = utils.readVarInt(this);
         this.packetManager.handlePacket(length, this.state, packetID, this);
       }
     } catch (e) {

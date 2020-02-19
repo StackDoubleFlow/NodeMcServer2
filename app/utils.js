@@ -2,10 +2,10 @@ import Client from "./Client";
 import Position from "./world/Position";
 import { readNBTFromPlayer } from "./nbt";
 
-var net = require('net');
-var crypto = require('crypto');
-var https = require('https');
-var zlib = require('zlib');
+const net = require('net');
+const crypto = require('crypto');
+const https = require('https');
+const zlib = require('zlib');
 
 export const types = {
   read: {
@@ -73,9 +73,9 @@ export const createGetRequest = (url) => new Promise((resolve, reject) => {
  * @param {Client} player
  */
 export function inflate(length, player) {
-  var data = player.internalBuffer.slice(player.internalIndex, player.internalIndex + length);
-  var inflatedData = zlib.inflateSync(data);
-  var dataToBeRead = player.internalBuffer.slice(player.internalIndex + length, player.internalBuffer.length - 1);
+  const data = player.internalBuffer.slice(player.internalIndex, player.internalIndex + length);
+  const inflatedData = zlib.inflateSync(data);
+  const dataToBeRead = player.internalBuffer.slice(player.internalIndex + length, player.internalBuffer.length - 1);
   player.internalBuffer = Buffer.concat([inflatedData, dataToBeRead]);
   player.internalIndex = 0;
 }
@@ -118,7 +118,7 @@ export function readBytes(player, bytes) {
   if (player.internalIndex > player.internalBuffer.length) {
     console.log("Out of bounds error reading internal buffer: ", player.internalIndex, " > ", player.internalBuffer.length - 1);
   }
-  var data = player.internalBuffer.slice(player.internalIndex, bytes + player.internalIndex);
+  const data = player.internalBuffer.slice(player.internalIndex, bytes + player.internalIndex);
   player.internalIndex += bytes;
   return data;
 }
@@ -255,7 +255,7 @@ export function writeParameters(params, player, ...values) {
  * Value of the Unsigned Shor that has been read
  */
 export function readUShort(player) {
-  var buffer = readBytes(player, 2);
+  const buffer = readBytes(player, 2);
   return buffer.readUIntBE(0, 2);
 }
 
@@ -268,7 +268,7 @@ export function readUShort(player) {
  * Value of the Float that has been read
  */
 export function readFloat(player) {
-  var buffer = readBytes(player, 4);
+  const buffer = readBytes(player, 4);
   return buffer.readFloatBE(0);
 }
 
@@ -281,7 +281,7 @@ export function readFloat(player) {
  * Value of the Double that has been read
  */
 export function readDouble(player) {
-  var buffer = readBytes(player, 8);
+  const buffer = readBytes(player, 8);
   return buffer.readDoubleBE(0);
 }
 
@@ -295,7 +295,7 @@ export function readDouble(player) {
  * Value of the Boolean that has been read
  */
 export function readBoolean(player) {
-  var byte = readBytes(player, 1).readInt8(0);
+  const byte = readBytes(player, 1).readInt8(0);
   return (byte === 0 ? false : true);
 }
 
@@ -306,12 +306,12 @@ export function readBoolean(player) {
  * @return {Position}
  */
 export function readPosition(player) {
-  var data = readBytes(player, 8);
-  var x = data.readUInt32BE(0) >>> 6;
-  var zHigh = (data.readUInt32BE(2) & 0x003FFFFF) << 4;
-  var zLow = (data.readUInt32BE(4) & 0x0000F000) >> 12;
-  var z = zLow | zHigh;
-  var y = data.readUInt32BE(4) & 0x00000FFF;
+  const data = readBytes(player, 8);
+  const x = data.readUInt32BE(0) >>> 6;
+  const zHigh = (data.readUInt32BE(2) & 0x003FFFFF) << 4;
+  const zLow = (data.readUInt32BE(4) & 0x0000F000) >> 12;
+  const z = zLow | zHigh;
+  const y = data.readUInt32BE(4) & 0x00000FFF;
   if (x >= 0x02000000) x -= 67108864;
   if (z >= 0x02000000) z -= 67108864;
   //if (y >= 0x800)       y -= 0x1000;
@@ -323,10 +323,10 @@ export function readPosition(player) {
  * @param {Client} bufferObject
  */
 export function writePosition(bufferObject, pos) {
-  var x = pos.x, y = pos.y, z = pos.z;
-  var data = Buffer.alloc(8);
-  var longHigh = ((x & 0x3FFFFFF) << 38) | ((z & 0x003FFFFF) >>> 16); // This shit shouldn't even work
-  var longLow = (y & 0xFFF) | ((z & 0xFFFFF) << 12);                  // I'm probably utilizing a bug in js but that's cool I guess
+  const x = pos.x, y = pos.y, z = pos.z;
+  const data = Buffer.alloc(8);
+  const longHigh = ((x & 0x3FFFFFF) << 38) | ((z & 0x003FFFFF) >>> 16); // This shit shouldn't even work
+  const longLow = (y & 0xFFF) | ((z & 0xFFFFF) << 12);                  // I'm probably utilizing a bug in js but that's cool I guess
   data.writeInt32BE(longHigh >> 32, 0);
   data.writeInt32BE(longLow, 4);
   appendData(bufferObject, data);
@@ -341,7 +341,7 @@ export function writePosition(bufferObject, pos) {
  * Maximum string length
  */
 export function readString(player, n) {
-  var length = readVarInt(player);
+  const length = readVarInt(player);
   if (n > 32767) {
     console.log("n was greater than 32767 while reading string!");
   }
@@ -358,12 +358,12 @@ export function readString(player, n) {
  * Value of the VarInt that has been read
  */
 export function readVarInt(player, returnLength = false) {
-  var numRead = 0;
-  var result = 0;
-  var read;
+  let numRead = 0;
+  let result = 0;
+  let read;
   do {
     read = readBytes(player, 1).readUInt8(0);
-    var value = (read & 0b01111111);
+    const value = (read & 0b01111111);
     result |= (value << (7 * numRead));
     numRead++;
     if (numRead > 5) {
@@ -386,12 +386,12 @@ export function readVarInt(player, returnLength = false) {
  * Value of the VarLong that has been read
  */
 export function readVarLong(player) {
-  var numRead = 0;
-  var result = 0;
-  var read;
+  let numRead = 0;
+  let result = 0;
+  let read;
   do {
     read = readBytes(player, 1);
-    var value = (read & 0b01111111);
+    const value = (read & 0b01111111);
     result |= (value << (7 * numRead));
 
     numRead++;
@@ -412,9 +412,9 @@ export function readVarLong(player) {
  * Value of the Long that has been read
  */
 export function readLong(player) {
-  var buffer = readBytes(player, 8);
-  var low = buffer.readInt32BE(4);
-  var n = buffer.readInt32BE() * 4294967296.0 + low;
+  const buffer = readBytes(player, 8);
+  const low = buffer.readInt32BE(4);
+  const n = buffer.readInt32BE() * 4294967296.0 + low;
   if (low < 0) n += 4294967296;
   return n;
 }
@@ -478,7 +478,7 @@ export function writeByteArray(bufferObject, bytes, writeLength) {
  * The object containing the buffer to write to
  */
 export function writeAngle(bufferObject, degrees) {
-  var angle = Math.floor(((degrees % 360) / 360) * 256);
+  const angle = Math.floor(((degrees % 360) / 360) * 256);
   writeByte(bufferObject, angle);
 }
 
@@ -492,9 +492,9 @@ export function writeAngle(bufferObject, degrees) {
  * Bytes of byte array that has been read
  */
 export function readByteArray(player) {
-  var out = new Array();
-  var length = readVarInt(player);
-  for (var i = 0; i < length; i++) {
+  const out = new Array();
+  const length = readVarInt(player);
+  for (let i = 0; i < length; i++) {
     out.push(readBytes(player, 1).readUInt8());
   }
   return out;
@@ -512,7 +512,7 @@ export function readByteArray(player) {
  * The object containing the buffer to write to
  */
 export function writeString(bufferObject, str, n) {
-  var out = Buffer.from(str, 'utf-8');
+  const out = Buffer.from(str, 'utf-8');
   if (str.length > n || out.length > n * 4) {
     console.error("Error writing string to network stream: ", str.length, n);
   }
@@ -527,7 +527,7 @@ export function writeString(bufferObject, str, n) {
  * @param {Object} bufferObject 
  */
 export function writeFloat(bufferObject, value) {
-  var temp = Buffer.alloc(4);
+  const temp = Buffer.alloc(4);
   temp.writeFloatBE(value, 0);
   appendData(bufferObject, temp);
 }
@@ -539,7 +539,7 @@ export function writeFloat(bufferObject, value) {
  * @param {Object} bufferObject 
  */
 export function writeDouble(bufferObject, value) {
-  var temp = Buffer.alloc(8);
+  const temp = Buffer.alloc(8);
   temp.writeDoubleBE(value, 0);
   appendData(bufferObject, temp);
 }
@@ -586,7 +586,7 @@ export function writeLong(bufferObject, value) {
  */
 export function writeVarInt(bufferObject, value) {
   do {
-    var temp = value & 0b01111111;
+    const temp = value & 0b01111111;
     // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
     value >>>= 7;
     if (value != 0) {
@@ -606,7 +606,7 @@ export function writeVarInt(bufferObject, value) {
  */
 export function writeVarLong(bufferObject, value) {
   do {
-    var temp = value & 0b01111111;
+    const temp = value & 0b01111111;
     // Note: >>> means that the sign bit is shifted with the rest of the number rather than being left alone
     value >>>= 7;
     if (value != 0) {
@@ -625,7 +625,7 @@ export function writeVarLong(bufferObject, value) {
  * The object containing the buffer to write to
  */
 export function writeInt(bufferObject, value) {
-  var temp = Buffer.alloc(4);
+  const temp = Buffer.alloc(4);
   temp.writeInt32BE(value, 0);
   appendData(bufferObject, temp);
 }
@@ -637,7 +637,7 @@ export function writeInt(bufferObject, value) {
  * @param {Object} bufferObject 
  */
 export function writeShort(bufferObject, value) {
-  var temp = Buffer.alloc(2);
+  const temp = Buffer.alloc(2);
   temp.writeInt16BE(value);
   appendData(bufferObject, temp);
 }
@@ -649,7 +649,7 @@ export function writeShort(bufferObject, value) {
  * @param {Object} bufferObject 
  */
 export function writeUShort(bufferObject, value) {
-  var temp = Buffer.alloc(2);
+  const temp = Buffer.alloc(2);
   temp.writeUInt16BE(value);
   appendData(bufferObject, temp);
 }
@@ -663,7 +663,7 @@ export function writeUShort(bufferObject, value) {
  * the object containing the buffer to write to
  */
 export function writeUUID(bufferObject, player) {
-  var temp = Buffer.from(player.unformattedUUID, 'hex');
+  const temp = Buffer.from(player.unformattedUUID, 'hex');
   appendData(bufferObject, temp);
 }
 
@@ -679,17 +679,18 @@ export function writeNbt(bufferObject, value) {
 
 }
 
-export function writeNBitLong(bufferObject, n, value) {
+// TODO: Optimize with bigints
+export function writeNBitLong(bufferObject, n, value) { 
   if (n % 8 !== 0) throw new Error("no");
 
-  var longs = [];
-  var longLow = 0;
-  var longHigh = 0;
-  for (var i = 0; i < 1; i++) {
-    var longOffset = (i * 9) % 64;
+  const longs = [];
+  let longLow = 0;
+  let longHigh = 0;
+  for (let i = 0; i < 1; i++) {
+    const longOffset = (i * 9) % 64;
     if (longOffset < 64 && longOffset + n - 1 >= 64) {
       longHigh |= (value << longOffset) & 0xFFFFFF;
-      var temp = Buffer.alloc(8);
+      const temp = Buffer.alloc(8);
       temp.writeInt32BE(longHigh);
       temp.writeInt32BE(longLow, 4);
       longs.push(temp);
@@ -704,7 +705,7 @@ export function writeNBitLong(bufferObject, n, value) {
       longHigh |= value << longOffset;
     }
     if (64 - longOffset == 9) {
-      var temp = Buffer.alloc(8);
+      const temp = Buffer.alloc(8);
       temp.writeInt32BE(longHigh);
       temp.writeInt32BE(longLow, 4);
       longs.push(temp);
@@ -755,10 +756,10 @@ export function writeNumsToNLongBuffer(data, bitsPerNum, nums) {
  */
 export function writePacket(packetID, data, player, state, name) {
   try {
-    var dataDuplicate = createBufferObject();
+    const dataDuplicate = createBufferObject();
     prependData(dataDuplicate, data.b);
-    var bufferObject = createBufferObject();
-    var temp = createBufferObject();
+    const bufferObject = createBufferObject();
+    let temp = createBufferObject();
     writeVarInt(temp, packetID); // Packet ID
     prependData(dataDuplicate, temp.b);
     if (player.usePacketCompression) {
@@ -811,8 +812,8 @@ export function createBufferObject() {
  * @param {Buffer} buffer 
  */
 export function performTwosCompliment(buffer) {
-  var carry = true;
-  var i, newByte, value;
+  let carry = true;
+  let i, newByte, value;
   for (i = buffer.length - 1; i >= 0; --i) {
     value = buffer.readUInt8(i);
     newByte = ~value & 0xff;
@@ -830,10 +831,10 @@ export function performTwosCompliment(buffer) {
  * 
  * @param {Buffer} hash 
  */
-export function minecraftHexDigest(hash) { //TODO: Clean-up
-  var negative = hash.readInt8(0) < 0;
+export function minecraftHexDigest(hash) { // TODO: Clean-up
+  const negative = hash.readInt8(0) < 0;
   if (negative) performTwosCompliment(hash);
-  var digest = hash.toString('hex');
+  let digest = hash.toString('hex');
   digest = digest.replace(/^0+/g, '');
   if (negative) digest = '-' + digest;
   return digest;
